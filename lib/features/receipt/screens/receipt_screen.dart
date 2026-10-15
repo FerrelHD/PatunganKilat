@@ -1,0 +1,246 @@
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_typography.dart';
+import '../../../core/utils/receipt_share_util.dart';
+import '../../bill_engine/providers/bill_session_provider.dart';
+import '../widgets/thermal_receipt_card.dart';
+
+class ReceiptScreen extends ConsumerStatefulWidget {
+  final VoidCallback onBack;
+
+  const ReceiptScreen({
+    super.key,
+    required this.onBack,
+  });
+
+  @override
+  ConsumerState<ReceiptScreen> createState() => _ReceiptScreenState();
+}
+
+class _ReceiptScreenState extends ConsumerState<ReceiptScreen> {
+  final GlobalKey _receiptRepaintKey = GlobalKey();
+  bool _isSharing = false;
+
+  void _copyWhatsAppText() {
+    final session = ref.read(billSessionProvider);
+    final calc = ref.read(splitCalculationProvider);
+
+    final text = ReceiptShareUtil.formatWhatsAppSummary(
+      session: session,
+      calc: calc,
+    );
+
+    Clipboard.setData(ClipboardData(text: text));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: const Text('Format rincian WhatsApp berhasil disalin ke Clipboard!'),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      ),
+    );
+  }
+
+  Future<void> _shareReceiptImage() async {
+    final session = ref.read(billSessionProvider);
+    setState(() => _isSharing = true);
+
+    try {
+      await ReceiptShareUtil.captureAndShareReceipt(
+        repaintBoundaryKey: _receiptRepaintKey,
+        sessionTitle: session.sessionTitle,
+      );
+    } finally {
+      if (mounted) setState(() => _isSharing = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final session = ref.watch(billSessionProvider);
+    final calc = ref.watch(splitCalculationProvider);
+
+    return Scaffold(
+      backgroundColor: AppColors.neoBg,
+      body: SafeArea(
+        child: Column(
+          children: [
+            // Top App Bar
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  InkWell(
+                    onTap: widget.onBack,
+                    borderRadius: BorderRadius.circular(999),
+                    child: Container(
+                      width: 40,
+                      height: 40,
+                      decoration: const BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                        boxShadow: AppColors.softShadow,
+                      ),
+                      child: const Center(
+                        child: Icon(
+                          Icons.arrow_back_ios_new_rounded,
+                          size: 16,
+                          color: AppColors.neoDark,
+                        ),
+                      ),
+                    ),
+                  ),
+                  Text(
+                    'Struk Patungan',
+                    style: AppTypography.screenTitle,
+                  ),
+                  Material(
+                    color: AppColors.neoLime,
+                    borderRadius: BorderRadius.circular(999),
+                    child: InkWell(
+                      onTap: _copyWhatsAppText,
+                      borderRadius: BorderRadius.circular(999),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        child: Text(
+                          'Copy WA',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.neoDark,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // Scrollable Receipt Content
+            Expanded(
+              child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                child: Column(
+                  children: [
+                    // Profile-Style Header Badge
+                    Column(
+                      children: [
+                        Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            Container(
+                              width: 80,
+                              height: 80,
+                              decoration: const BoxDecoration(
+                                color: Colors.white,
+                                shape: BoxShape.circle,
+                                boxShadow: AppColors.softShadow,
+                              ),
+                              padding: const EdgeInsets.all(5),
+                              child: Container(
+                                decoration: const BoxDecoration(
+                                  color: AppColors.neoLime,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Center(
+                                  child: Text('🍜', style: TextStyle(fontSize: 34)),
+                                ),
+                              ),
+                            ),
+                            Positioned(
+                              bottom: 0,
+                              right: 0,
+                              child: Container(
+                                width: 28,
+                                height: 28,
+                                decoration: const BoxDecoration(
+                                  color: AppColors.neoDark,
+                                  borderRadius: BorderRadius.all(Radius.circular(10)),
+                                  boxShadow: AppColors.softShadow,
+                                ),
+                                child: const Center(
+                                  child: Icon(
+                                    Icons.receipt_long_rounded,
+                                    size: 15,
+                                    color: AppColors.neoLime,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 10),
+                        Text(
+                          session.sessionTitle,
+                          style: AppTypography.cardTitle.copyWith(fontSize: 15),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          '15 Okt 2026 • Talangan oleh ${session.friends.firstWhere((f) => f.isPayer, orElse: () => session.friends.first).name}',
+                          style: AppTypography.bodyMuted,
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 20),
+
+                    // Thermal Receipt Card wrapped inside RepaintBoundary for PNG capture
+                    RepaintBoundary(
+                      key: _receiptRepaintKey,
+                      child: ThermalReceiptCard(
+                        session: session,
+                        calc: calc,
+                      ),
+                    ),
+
+                    const SizedBox(height: 100),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+
+      // Bottom Action Bar
+      bottomSheet: Container(
+        padding: const EdgeInsets.fromLTRB(20, 14, 20, 20),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.96),
+          border: Border(top: BorderSide(color: Colors.black.withValues(alpha: 0.05))),
+        ),
+        child: Material(
+          color: AppColors.neoDark,
+          borderRadius: BorderRadius.circular(999),
+          child: InkWell(
+            onTap: _isSharing ? null : _shareReceiptImage,
+            borderRadius: BorderRadius.circular(999),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(
+                    Icons.chat_bubble_rounded,
+                    size: 18,
+                    color: AppColors.neoLime,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    _isSharing ? 'Menyiapkan Struk...' : 'Share Struk ke WA',
+                    style: AppTypography.buttonText,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
