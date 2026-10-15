@@ -21,9 +21,9 @@ class HeroBalanceCard extends ConsumerWidget {
     final calc = ref.watch(splitCalculationProvider);
     final notifier = ref.read(billSessionProvider.notifier);
 
-    final displayBalance = session.hideBalance
-        ? 'Rp •••••••'
-        : CurrencyFormatter.formatRp(calc.grandTotal);
+    final displayBalance = session.hasActiveSession
+        ? (session.hideBalance ? 'Rp •••••••' : CurrencyFormatter.formatRp(calc.grandTotal))
+        : 'Rp 0';
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -47,15 +47,17 @@ class HeroBalanceCard extends ConsumerWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: AppColors.neoLime.withValues(alpha: 0.4),
+                  color: session.hasActiveSession
+                      ? AppColors.neoLime.withValues(alpha: 0.4)
+                      : AppColors.neoBg,
                   borderRadius: BorderRadius.circular(999),
                 ),
                 child: Text(
-                  'Sesi: ${session.sessionTitle}',
+                  session.hasActiveSession ? 'Sesi: ${session.sessionTitle}' : 'Belum Ada Sesi',
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 11,
                     fontWeight: FontWeight.w800,
-                    color: AppColors.neoDark,
+                    color: session.hasActiveSession ? AppColors.neoDark : AppColors.neoMuted,
                   ),
                 ),
               ),
@@ -73,37 +75,40 @@ class HeroBalanceCard extends ConsumerWidget {
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
-              InkWell(
-                onTap: notifier.toggleHideBalance,
-                borderRadius: BorderRadius.circular(12),
-                child: Container(
-                  width: 36,
-                  height: 36,
-                  decoration: BoxDecoration(
-                    color: AppColors.neoBg,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Center(
-                    child: Icon(
-                      session.hideBalance
-                          ? Icons.visibility_rounded
-                          : Icons.visibility_off_rounded,
-                      size: 18,
-                      color: AppColors.neoMuted,
+              if (session.hasActiveSession)
+                InkWell(
+                  onTap: notifier.toggleHideBalance,
+                  borderRadius: BorderRadius.circular(12),
+                  child: Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: AppColors.neoBg,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Center(
+                      child: Icon(
+                        session.hideBalance
+                            ? Icons.visibility_rounded
+                            : Icons.visibility_off_rounded,
+                        size: 18,
+                        color: AppColors.neoMuted,
+                      ),
                     ),
                   ),
                 ),
-              ),
             ],
           ),
           const SizedBox(height: 18),
           NeoPillButton(
-            label: 'Buat Patungan Kilat',
-            icon: const Icon(
-              Icons.add_circle_outline_rounded,
-              size: 18,
-              color: AppColors.neoLime,
-            ),
+            label: session.hasActiveSession ? 'Lanjut ke Split Arena →' : '+ Buat Patungan Baru',
+            icon: session.hasActiveSession
+                ? null
+                : const Icon(
+                    Icons.add_circle_outline_rounded,
+                    size: 18,
+                    color: AppColors.neoLime,
+                  ),
             onPressed: onStartSplit,
           ),
         ],

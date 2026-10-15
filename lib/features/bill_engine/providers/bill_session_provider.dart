@@ -5,6 +5,7 @@ import '../models/split_breakdown.dart';
 import '../services/split_calculation_engine.dart';
 
 class BillSessionState {
+  final bool hasActiveSession;
   final String sessionTitle;
   final List<Friend> friends;
   final List<MenuItem> items;
@@ -15,17 +16,19 @@ class BillSessionState {
   final bool hideBalance;
 
   const BillSessionState({
-    required this.sessionTitle,
-    required this.friends,
-    required this.items,
-    required this.activeFriendId,
+    this.hasActiveSession = false,
+    this.sessionTitle = '',
+    this.friends = const [],
+    this.items = const [],
+    this.activeFriendId = '',
     this.taxEnabled = true,
-    this.serviceEnabled = true,
-    this.discountAmount = 30000,
+    this.serviceEnabled = false,
+    this.discountAmount = 0,
     this.hideBalance = false,
   });
 
   BillSessionState copyWith({
+    bool? hasActiveSession,
     String? sessionTitle,
     List<Friend>? friends,
     List<MenuItem>? items,
@@ -36,6 +39,7 @@ class BillSessionState {
     bool? hideBalance,
   }) {
     return BillSessionState(
+      hasActiveSession: hasActiveSession ?? this.hasActiveSession,
       sessionTitle: sessionTitle ?? this.sessionTitle,
       friends: friends ?? this.friends,
       items: items ?? this.items,
@@ -47,7 +51,21 @@ class BillSessionState {
     );
   }
 
-  static BillSessionState initialDemo() {
+  static BillSessionState empty() {
+    return const BillSessionState(
+      hasActiveSession: false,
+      sessionTitle: '',
+      friends: [],
+      items: [],
+      activeFriendId: '',
+      taxEnabled: true,
+      serviceEnabled: false,
+      discountAmount: 0,
+      hideBalance: false,
+    );
+  }
+
+  static BillSessionState demoPreset() {
     const friends = [
       Friend(id: 'raka', name: 'Raka', role: 'Talangan', theme: 'lime'),
       Friend(id: 'nadia', name: 'Nadia', role: 'Teman', theme: 'dark'),
@@ -64,6 +82,7 @@ class BillSessionState {
     ];
 
     return const BillSessionState(
+      hasActiveSession: true,
       sessionTitle: 'Ramen Seirock-Ya',
       friends: friends,
       items: items,
@@ -77,9 +96,49 @@ class BillSessionState {
 }
 
 class BillSessionNotifier extends StateNotifier<BillSessionState> {
-  BillSessionNotifier() : super(BillSessionState.initialDemo());
+  BillSessionNotifier() : super(BillSessionState.empty());
 
-  static const List<int> discountOptions = [0, 30000, 50000];
+  static const List<int> discountOptions = [0, 20000, 30000, 50000];
+
+  void startNewSession({
+    required String title,
+    required String creatorName,
+    required List<String> friendNames,
+  }) {
+    final creator = Friend(
+      id: 'creator_${DateTime.now().millisecondsSinceEpoch}',
+      name: creatorName.trim().isEmpty ? 'Saya' : creatorName.trim(),
+      role: 'Talangan',
+      theme: 'lime',
+    );
+
+    final friendsList = <Friend>[creator];
+    for (var i = 0; i < friendNames.length; i++) {
+      final name = friendNames[i].trim();
+      if (name.isNotEmpty) {
+        friendsList.add(
+          Friend(
+            id: 'friend_${DateTime.now().millisecondsSinceEpoch}_$i',
+            name: name,
+            role: 'Teman',
+            theme: i == 0 ? 'dark' : 'white',
+          ),
+        );
+      }
+    }
+
+    state = BillSessionState(
+      hasActiveSession: true,
+      sessionTitle: title.trim().isEmpty ? 'Patungan Baru' : title.trim(),
+      friends: friendsList,
+      items: const [],
+      activeFriendId: creator.id,
+      taxEnabled: true,
+      serviceEnabled: false,
+      discountAmount: 0,
+      hideBalance: false,
+    );
+  }
 
   void selectActiveFriend(String friendId) {
     state = state.copyWith(activeFriendId: friendId);
@@ -129,19 +188,27 @@ class BillSessionNotifier extends StateNotifier<BillSessionState> {
   }
 
   void addNewMenuItem(String name, int price, String emoji) {
+    final activeId = state.activeFriendId.isNotEmpty
+        ? state.activeFriendId
+        : (state.friends.isNotEmpty ? state.friends.first.id : '');
+
     final newItem = MenuItem(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
       name: name,
       price: price,
       emoji: emoji,
-      assignedTo: [state.activeFriendId],
+      assignedTo: activeId.isNotEmpty ? [activeId] : [],
     );
 
     state = state.copyWith(items: [newItem, ...state.items]);
   }
 
-  void resetToDefaultDemo() {
-    state = BillSessionState.initialDemo();
+  void loadDemoData() {
+    state = BillSessionState.demoPreset();
+  }
+
+  void resetSession() {
+    state = BillSessionState.empty();
   }
 }
 

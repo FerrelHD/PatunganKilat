@@ -5,7 +5,10 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/utils/receipt_share_util.dart';
+import '../../../core/widgets/neo_pill_button.dart';
 import '../../bill_engine/providers/bill_session_provider.dart';
+import '../../home/widgets/create_session_bottom_sheet.dart';
+import '../../onboarding/providers/user_profile_provider.dart';
 import '../widgets/thermal_receipt_card.dart';
 
 class ReceiptScreen extends ConsumerStatefulWidget {
@@ -24,13 +27,22 @@ class _ReceiptScreenState extends ConsumerState<ReceiptScreen> {
   final GlobalKey _receiptRepaintKey = GlobalKey();
   bool _isSharing = false;
 
+  String _getMonthName(int month) {
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+    return months[(month - 1).clamp(0, 11)];
+  }
+
   void _copyWhatsAppText() {
     final session = ref.read(billSessionProvider);
     final calc = ref.read(splitCalculationProvider);
+    final userProfile = ref.read(userProfileProvider);
 
     final text = ReceiptShareUtil.formatWhatsAppSummary(
       session: session,
       calc: calc,
+      bankName: userProfile.bankName.isNotEmpty ? userProfile.bankName : 'BCA',
+      accountNumber: userProfile.accountNumber.isNotEmpty ? userProfile.accountNumber : '-',
+      accountHolder: userProfile.name.isNotEmpty ? userProfile.name : 'Saya',
     );
 
     Clipboard.setData(ClipboardData(text: text));
@@ -61,6 +73,102 @@ class _ReceiptScreenState extends ConsumerState<ReceiptScreen> {
   Widget build(BuildContext context) {
     final session = ref.watch(billSessionProvider);
     final calc = ref.watch(splitCalculationProvider);
+
+    if (!session.hasActiveSession || session.friends.isEmpty || session.items.isEmpty) {
+      return Scaffold(
+        backgroundColor: AppColors.neoBg,
+        body: SafeArea(
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: Row(
+                  children: [
+                    InkWell(
+                      onTap: widget.onBack,
+                      borderRadius: BorderRadius.circular(999),
+                      child: Container(
+                        width: 40,
+                        height: 40,
+                        decoration: const BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                          boxShadow: AppColors.softShadow,
+                        ),
+                        child: const Center(
+                          child: Icon(
+                            Icons.arrow_back_ios_new_rounded,
+                            size: 16,
+                            color: AppColors.neoDark,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 14),
+                    Text(
+                      'Struk Patungan',
+                      style: AppTypography.screenTitle,
+                    ),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(24.0),
+                    child: Container(
+                      padding: const EdgeInsets.all(24),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(28),
+                        boxShadow: AppColors.softShadow,
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            width: 64,
+                            height: 64,
+                            decoration: const BoxDecoration(
+                              color: AppColors.neoBg,
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Center(
+                              child: Text('🧾', style: TextStyle(fontSize: 32)),
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            'Belum Ada Struk Aktif',
+                            style: AppTypography.cardTitle.copyWith(fontSize: 16),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Mulai sesi patungan dan masukkan menu pesanan untuk menghasilkan struk digital & rincian per orang.',
+                            textAlign: TextAlign.center,
+                            style: AppTypography.bodyMuted.copyWith(fontSize: 12, height: 1.4),
+                          ),
+                          const SizedBox(height: 24),
+                          NeoPillButton(
+                            label: '+ Buat Patungan Baru',
+                            onPressed: () {
+                              CreateSessionBottomSheet.show(
+                                context,
+                                onSessionCreated: () {},
+                              );
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
 
     return Scaffold(
       backgroundColor: AppColors.neoBg,
@@ -181,7 +289,7 @@ class _ReceiptScreenState extends ConsumerState<ReceiptScreen> {
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          '15 Okt 2026 • Talangan oleh ${session.friends.firstWhere((f) => f.isPayer, orElse: () => session.friends.first).name}',
+                          '${DateTime.now().day} ${_getMonthName(DateTime.now().month)} ${DateTime.now().year} • Talangan oleh ${session.friends.firstWhere((f) => f.isPayer, orElse: () => session.friends.first).name}',
                           style: AppTypography.bodyMuted,
                         ),
                       ],

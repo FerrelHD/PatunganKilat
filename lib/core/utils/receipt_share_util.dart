@@ -21,7 +21,10 @@ class ReceiptShareUtil {
   }) {
     final buffer = StringBuffer();
     buffer.writeln('*🧾 PATUNGANKILAT — ${session.sessionTitle.toUpperCase()}*');
-    buffer.writeln('Talangan: ${session.friends.firstWhere((f) => f.isPayer, orElse: () => session.friends.first).name}');
+    final payerName = session.friends.isNotEmpty
+        ? session.friends.firstWhere((f) => f.isPayer, orElse: () => session.friends.first).name
+        : accountHolder;
+    buffer.writeln('Talangan: $payerName');
     buffer.writeln('--------------------------------');
 
     for (final person in calc.breakdowns) {

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
@@ -7,8 +8,9 @@ import '../../../core/utils/currency_formatter.dart';
 import '../../../core/widgets/jagged_receipt_clipper.dart';
 import '../../bill_engine/models/split_breakdown.dart';
 import '../../bill_engine/providers/bill_session_provider.dart';
+import '../../onboarding/providers/user_profile_provider.dart';
 
-class ThermalReceiptCard extends StatelessWidget {
+class ThermalReceiptCard extends ConsumerWidget {
   final BillSessionState session;
   final SplitCalculationResult calc;
 
@@ -19,7 +21,11 @@ class ThermalReceiptCard extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final userProfile = ref.watch(userProfileProvider);
+    final bankName = userProfile.bankName.isNotEmpty ? userProfile.bankName : 'BCA';
+    final accountNumber = userProfile.accountNumber.isNotEmpty ? userProfile.accountNumber : '-';
+    final accountHolder = userProfile.name.isNotEmpty ? userProfile.name : 'Talangan';
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -240,16 +246,16 @@ class ThermalReceiptCard extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'TRANSFER KE BCA',
+                              'TRANSFER KE ${bankName.toUpperCase()}',
                               style: AppTypography.captionBold.copyWith(fontSize: 9),
                             ),
                             const SizedBox(height: 1),
                             Text(
-                              '6820 4491 8821',
+                              accountNumber,
                               style: AppTypography.monoAccountNumber.copyWith(fontSize: 12),
                             ),
                             Text(
-                              'a.n. Raka Pratama',
+                              'a.n. $accountHolder',
                               style: AppTypography.bodyMuted.copyWith(fontSize: 10),
                             ),
                           ],
@@ -261,10 +267,10 @@ class ThermalReceiptCard extends StatelessWidget {
                       borderRadius: BorderRadius.circular(12),
                       child: InkWell(
                         onTap: () {
-                          Clipboard.setData(const ClipboardData(text: '682044918821'));
+                          Clipboard.setData(ClipboardData(text: accountNumber));
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              content: const Text('Nomor rekening BCA (682044918821) disalin!'),
+                              content: Text('Nomor rekening $bankName ($accountNumber) disalin!'),
                               behavior: SnackBarBehavior.floating,
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                             ),

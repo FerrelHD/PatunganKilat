@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
+import '../../bill_engine/providers/bill_session_provider.dart';
+import '../../onboarding/providers/user_profile_provider.dart';
 import '../widgets/account_carousel.dart';
+import '../widgets/create_session_bottom_sheet.dart';
 import '../widgets/hero_balance_card.dart';
 import '../widgets/recent_sessions_card.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends ConsumerWidget {
   final VoidCallback onNavigateToSplitArena;
   final VoidCallback onNavigateToReceipt;
 
@@ -15,8 +19,28 @@ class HomeScreen extends StatelessWidget {
     required this.onNavigateToReceipt,
   });
 
+  String _getTimeGreeting() {
+    final hour = DateTime.now().hour;
+    if (hour >= 4 && hour < 11) return 'Pagi';
+    if (hour >= 11 && hour < 15) return 'Siang';
+    if (hour >= 15 && hour < 18) return 'Sore';
+    return 'Malam';
+  }
+
+  void _openCreateSession(BuildContext context) {
+    CreateSessionBottomSheet.show(
+      context,
+      onSessionCreated: onNavigateToSplitArena,
+    );
+  }
+
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final userProfile = ref.watch(userProfileProvider);
+    final session = ref.watch(billSessionProvider);
+    final greeting = _getTimeGreeting();
+    final displayName = userProfile.name.trim().isNotEmpty ? userProfile.name.trim() : 'Teman';
+
     return Scaffold(
       backgroundColor: AppColors.neoBg,
       body: SafeArea(
@@ -34,7 +58,7 @@ class HomeScreen extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Malam, Raka 👋',
+                        '$greeting, $displayName 👋',
                         style: AppTypography.screenTitle.copyWith(fontSize: 18),
                       ),
                       const SizedBox(height: 2),
@@ -48,7 +72,7 @@ class HomeScreen extends StatelessWidget {
                     onTap: () {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
-                          content: const Text('Semua teman di grup Kopi Senja sudah lunas! 🎉'),
+                          content: const Text('Notifikasi: Aplikasi siap digunakan untuk bagi tagihan! 🎉'),
                           behavior: SnackBarBehavior.floating,
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                         ),
@@ -95,7 +119,15 @@ class HomeScreen extends StatelessWidget {
               const SizedBox(height: 20),
 
               // Active Balance Summary Card
-              HeroBalanceCard(onStartSplit: onNavigateToSplitArena),
+              HeroBalanceCard(
+                onStartSplit: () {
+                  if (session.hasActiveSession) {
+                    onNavigateToSplitArena();
+                  } else {
+                    _openCreateSession(context);
+                  }
+                },
+              ),
 
               const SizedBox(height: 24),
 
@@ -105,7 +137,10 @@ class HomeScreen extends StatelessWidget {
               const SizedBox(height: 24),
 
               // Recent Sessions History Card
-              RecentSessionsCard(onOpenActiveSession: onNavigateToSplitArena),
+              RecentSessionsCard(
+                onOpenActiveSession: onNavigateToSplitArena,
+                onStartNewSession: () => _openCreateSession(context),
+              ),
 
               const SizedBox(height: 24),
             ],

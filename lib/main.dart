@@ -1,9 +1,12 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'core/theme/app_colors.dart';
 import 'core/theme/app_typography.dart';
 import 'features/home/screens/home_screen.dart';
+import 'features/onboarding/providers/user_profile_provider.dart';
+import 'features/onboarding/screens/splash_screen.dart';
 import 'features/receipt/screens/receipt_screen.dart';
 import 'features/split_arena/screens/split_arena_screen.dart';
 
@@ -30,19 +33,19 @@ class PatunganKilatApp extends StatelessWidget {
         textTheme: GoogleFonts.plusJakartaSansTextTheme(),
         useMaterial3: true,
       ),
-      home: const MainNavigationShell(),
+      home: const SplashScreen(),
     );
   }
 }
 
-class MainNavigationShell extends StatefulWidget {
+class MainNavigationShell extends ConsumerStatefulWidget {
   const MainNavigationShell({super.key});
 
   @override
-  State<MainNavigationShell> createState() => _MainNavigationShellState();
+  ConsumerState<MainNavigationShell> createState() => _MainNavigationShellState();
 }
 
-class _MainNavigationShellState extends State<MainNavigationShell> {
+class _MainNavigationShellState extends ConsumerState<MainNavigationShell> {
   int _currentIndex = 0;
 
   void _navigateToTab(int index) {
@@ -51,6 +54,11 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
 
   @override
   Widget build(BuildContext context) {
+    final userProfile = ref.watch(userProfileProvider);
+    final userInitial = userProfile.name.trim().isNotEmpty
+        ? userProfile.name.trim().substring(0, min(2, userProfile.name.trim().length)).toUpperCase()
+        : 'PK';
+
     final screens = [
       HomeScreen(
         onNavigateToSplitArena: () => _navigateToTab(1),
@@ -122,7 +130,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
                   ),
                   child: Center(
                     child: Text(
-                      'RK',
+                      userInitial,
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 9,
                         fontWeight: FontWeight.w900,

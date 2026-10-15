@@ -1,14 +1,27 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/widgets/neo_dark_card.dart';
 import '../../../core/widgets/neo_lime_card.dart';
+import '../../onboarding/providers/user_profile_provider.dart';
 
-class AccountCarousel extends StatelessWidget {
+class AccountCarousel extends ConsumerWidget {
   const AccountCarousel({super.key});
 
+  String _maskAccount(String raw) {
+    if (raw.length <= 4) return raw;
+    return '•••• ${raw.substring(raw.length - 4)}';
+  }
+
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final userProfile = ref.watch(userProfileProvider);
+    final bankName = userProfile.bankName.isNotEmpty ? '${userProfile.bankName}.' : 'BCA.';
+    final holderName = userProfile.name.isNotEmpty ? userProfile.name : 'Saya';
+    final rawNumber = userProfile.accountNumber.isNotEmpty ? userProfile.accountNumber : '682044918821';
+    final masked = _maskAccount(rawNumber);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -47,15 +60,20 @@ class AccountCarousel extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 12),
-        const SingleChildScrollView(
+        SingleChildScrollView(
           scrollDirection: Axis.horizontal,
-          physics: BouncingScrollPhysics(),
+          physics: const BouncingScrollPhysics(),
           child: Row(
             children: [
-              NeoLimeCard(),
-              SizedBox(width: 12),
-              NeoDarkCard(),
-              SizedBox(width: 4),
+              NeoLimeCard(
+                bankName: bankName,
+                holderName: holderName,
+                accountNumber: masked,
+                rawAccountNumber: rawNumber,
+              ),
+              const SizedBox(width: 12),
+              const NeoDarkCard(),
+              const SizedBox(width: 4),
             ],
           ),
         ),
