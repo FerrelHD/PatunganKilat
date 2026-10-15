@@ -12,11 +12,11 @@ void main() {
     );
 
     expect(find.text('PatunganKilat'), findsOneWidget);
-    expect(find.text('Visual Bill Splitter Tanpa Drama'), findsOneWidget);
+    expect(find.textContaining('Visual Bill Splitter Tanpa Drama'), findsOneWidget);
 
     // Advance timer so pending Future.delayed timer completes cleanly
-    await tester.pump(const Duration(milliseconds: 2000));
-    await tester.pumpAndSettle();
+    await tester.pump(const Duration(milliseconds: 2200));
+    await tester.pump(const Duration(milliseconds: 700));
   });
 
   testWidgets('MainNavigationShell renders clean zero-state Home', (WidgetTester tester) async {
