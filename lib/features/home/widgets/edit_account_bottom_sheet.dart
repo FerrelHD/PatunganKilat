@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/widgets/neo_pill_button.dart';
+import '../../../core/widgets/neo_toast.dart';
 import '../../onboarding/providers/user_profile_provider.dart';
 
 class EditAccountBottomSheet extends ConsumerStatefulWidget {
@@ -69,12 +70,10 @@ class _EditAccountBottomSheetState extends ConsumerState<EditAccountBottomSheet>
   Future<void> _handleSave() async {
     final name = _nameController.text.trim();
     if (name.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Nama panggilan tidak boleh kosong'),
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        ),
+      NeoToast.show(
+        context,
+        'Nama panggilan tidak boleh kosong',
+        type: NeoToastType.warning,
       );
       return;
     }
@@ -94,12 +93,10 @@ class _EditAccountBottomSheetState extends ConsumerState<EditAccountBottomSheet>
     Navigator.pop(context);
 
     final walletMsg = walletNum.isNotEmpty ? ' & $_selectedWallet' : '';
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Rekening talangan berhasil diperbarui ($_selectedBank$walletMsg)! ⚡'),
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      ),
+    NeoToast.show(
+      context,
+      'Rekening talangan berhasil diperbarui ($_selectedBank$walletMsg)! ⚡',
+      type: NeoToastType.success,
     );
   }
 

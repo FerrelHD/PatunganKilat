@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/widgets/neo_pill_button.dart';
+import '../../../core/widgets/neo_toast.dart';
 import '../providers/saved_friends_provider.dart';
 
 class FriendsScreen extends ConsumerStatefulWidget {
@@ -119,12 +120,10 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
                       if (name.isNotEmpty) {
                         ref.read(savedFriendsProvider.notifier).addFriend(name, group: chosenGroup);
                         Navigator.pop(ctx);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text('$name berhasil ditambahkan ke $chosenGroup! 🎉'),
-                            behavior: SnackBarBehavior.floating,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                          ),
+                        NeoToast.show(
+                          context,
+                          '$name berhasil ditambahkan ke $chosenGroup! 🎉',
+                          type: NeoToastType.success,
                         );
                       }
                     },

@@ -5,6 +5,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/utils/currency_formatter.dart';
 import '../../../core/widgets/neo_pill_button.dart';
+import '../../../core/widgets/neo_toast.dart';
 import '../../bill_engine/providers/bill_session_provider.dart';
 import '../../home/widgets/create_session_bottom_sheet.dart';
 import '../widgets/add_menu_bottom_sheet.dart';
@@ -179,12 +180,10 @@ class SplitArenaScreen extends ConsumerWidget {
                         context,
                         onSave: (name, price, emoji) {
                           notifier.addNewMenuItem(name, price, emoji);
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text('"$name" ditambahkan ke tagihan!'),
-                              behavior: SnackBarBehavior.floating,
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                            ),
+                          NeoToast.show(
+                            context,
+                            '"$name" ditambahkan ke tagihan! ⚡',
+                            type: NeoToastType.success,
                           );
                         },
                       );
@@ -299,12 +298,10 @@ class SplitArenaScreen extends ConsumerWidget {
                         InkWell(
                           onTap: () {
                             notifier.splitAllEqually();
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: const Text('Semua menu dibagi rata ke seluruh teman!'),
-                                behavior: SnackBarBehavior.floating,
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                              ),
+                            NeoToast.show(
+                              context,
+                              'Semua menu dibagi rata ke seluruh teman! ⚡',
+                              type: NeoToastType.info,
                             );
                           },
                           child: Text(
@@ -363,12 +360,10 @@ class SplitArenaScreen extends ConsumerWidget {
                                     context,
                                     onSave: (name, price, emoji) {
                                       notifier.addNewMenuItem(name, price, emoji);
-                                      ScaffoldMessenger.of(context).showSnackBar(
-                                        SnackBar(
-                                          content: Text('"$name" ditambahkan ke tagihan!'),
-                                          behavior: SnackBarBehavior.floating,
-                                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                                        ),
+                                      NeoToast.show(
+                                        context,
+                                        '"$name" ditambahkan ke tagihan! ⚡',
+                                        type: NeoToastType.success,
                                       );
                                     },
                                   );
@@ -455,12 +450,10 @@ class SplitArenaScreen extends ConsumerWidget {
               child: InkWell(
                 onTap: () {
                   if (session.items.isEmpty) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: const Text('Tambahkan minimal 1 menu makanan terlebih dahulu untuk melihat struk'),
-                        behavior: SnackBarBehavior.floating,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                      ),
+                    NeoToast.show(
+                      context,
+                      'Tambahkan minimal 1 menu makanan terlebih dahulu untuk melihat struk',
+                      type: NeoToastType.warning,
                     );
                     return;
                   }

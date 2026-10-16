@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/widgets/neo_pill_button.dart';
+import '../../../core/widgets/neo_toast.dart';
 
 class AddMenuBottomSheet extends StatefulWidget {
   final void Function(String name, int price, String emoji) onSave;
@@ -47,12 +48,10 @@ class _AddMenuBottomSheetState extends State<AddMenuBottomSheet> {
     final price = int.tryParse(_priceController.text.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0;
 
     if (name.isEmpty || price <= 0) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Silakan masukkan nama menu dan nominal harga yang valid'),
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        ),
+      NeoToast.show(
+        context,
+        'Silakan masukkan nama menu dan nominal harga yang valid',
+        type: NeoToastType.warning,
       );
       return;
     }

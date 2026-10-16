@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_typography.dart';
+import 'neo_toast.dart';
 
 class NeoDarkCard extends StatelessWidget {
   final String walletName;
@@ -168,13 +169,10 @@ class NeoDarkCard extends StatelessWidget {
                   onTap: onCopy ?? () {
                     final textToCopy = rawPhoneNumber.isNotEmpty ? rawPhoneNumber : phoneNumber;
                     Clipboard.setData(ClipboardData(text: textToCopy));
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Nomor $walletName ($textToCopy) disalin!'),
-                        duration: const Duration(seconds: 2),
-                        behavior: SnackBarBehavior.floating,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                      ),
+                    NeoToast.show(
+                      context,
+                      'Nomor $walletName ($textToCopy) disalin! ⚡',
+                      type: NeoToastType.success,
                     );
                   },
                   child: Padding(

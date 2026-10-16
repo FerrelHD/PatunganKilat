@@ -6,6 +6,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/utils/receipt_share_util.dart';
 import '../../../core/widgets/neo_pill_button.dart';
+import '../../../core/widgets/neo_toast.dart';
 import '../../bill_engine/providers/bill_session_provider.dart';
 import '../../home/widgets/create_session_bottom_sheet.dart';
 import '../../onboarding/providers/user_profile_provider.dart';
@@ -51,12 +52,10 @@ class _ReceiptScreenState extends ConsumerState<ReceiptScreen> {
 
     final launched = await ReceiptShareUtil.launchWhatsAppShare(text);
     if (!launched && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Rincian tersalin ke Clipboard! Buka WhatsApp untuk mengirim.'),
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        ),
+      NeoToast.show(
+        context,
+        'Rincian tersalin! Buka WhatsApp untuk mengirim. ⚡',
+        type: NeoToastType.info,
       );
     }
   }
@@ -71,16 +70,12 @@ class _ReceiptScreenState extends ConsumerState<ReceiptScreen> {
         sessionTitle: session.sessionTitle,
       );
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              success
-                  ? 'Struk siap dibagikan / tersimpan! 🧾⚡'
-                  : 'Gagal memproses gambar struk. Coba lagi.',
-            ),
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          ),
+        NeoToast.show(
+          context,
+          success
+              ? 'Struk siap dibagikan / tersimpan! 🧾⚡'
+              : 'Gagal memproses gambar struk. Coba lagi.',
+          type: success ? NeoToastType.success : NeoToastType.error,
         );
       }
     } finally {
@@ -111,12 +106,10 @@ class _ReceiptScreenState extends ConsumerState<ReceiptScreen> {
             onPressed: () {
               Navigator.pop(ctx);
               ref.read(billSessionProvider.notifier).completeSession();
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: const Text('Sesi patungan selesai! Meja patungan sudah bersih 🎉'),
-                  behavior: SnackBarBehavior.floating,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                ),
+              NeoToast.show(
+                context,
+                'Sesi patungan selesai! Meja patungan sudah bersih 🎉',
+                type: NeoToastType.success,
               );
               widget.onBack();
             },

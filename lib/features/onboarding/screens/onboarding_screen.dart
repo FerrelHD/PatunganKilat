@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/widgets/neo_pill_button.dart';
+import '../../../core/widgets/neo_toast.dart';
 import '../../../main.dart';
 import '../providers/user_profile_provider.dart';
 
@@ -49,12 +50,10 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   Future<void> _submitProfile() async {
     final name = _nameController.text.trim();
     if (name.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Silakan masukkan nama panggilanmu'),
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        ),
+      NeoToast.show(
+        context,
+        'Silakan masukkan nama panggilanmu',
+        type: NeoToastType.warning,
       );
       return;
     }

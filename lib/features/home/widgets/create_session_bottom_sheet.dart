@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/widgets/neo_pill_button.dart';
+import '../../../core/widgets/neo_toast.dart';
 import '../../bill_engine/providers/bill_session_provider.dart';
 import '../../friends/providers/saved_friends_provider.dart';
 import '../../onboarding/providers/user_profile_provider.dart';
@@ -63,12 +64,10 @@ class _CreateSessionBottomSheetState extends ConsumerState<CreateSessionBottomSh
   void _submit() {
     final title = _titleController.text.trim();
     if (title.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Silakan masukkan nama tempat atau acara nongkrong'),
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        ),
+      NeoToast.show(
+        context,
+        'Silakan masukkan nama tempat atau acara nongkrong',
+        type: NeoToastType.warning,
       );
       return;
     }

@@ -64,19 +64,19 @@ void main() {
   });
 
   group('ReceiptShareUtil WhatsApp Summary with E-Wallet', () {
-    final session = BillSessionState(
+    const session = BillSessionState(
       sessionTitle: 'Kopi Kenangan',
-      friends: const [
+      friends: [
         Friend(id: '1', name: 'Raka', role: 'Talangan'),
         Friend(id: '2', name: 'Budi', role: 'Teman'),
       ],
-      items: const [
+      items: [
         MenuItem(id: 'i1', name: 'Kopi Susu', price: 20000, assignedTo: ['1']),
         MenuItem(id: 'i2', name: 'Americano', price: 20000, assignedTo: ['2']),
       ],
     );
 
-    final calc = const SplitCalculationResult(
+    const calc = SplitCalculationResult(
       subtotalAll: 40000,
       totalTaxService: 4000,
       totalDiscount: 0,

@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_typography.dart';
+import 'neo_toast.dart';
 
 class NeoLimeCard extends StatelessWidget {
   final String bankName;
@@ -127,13 +128,10 @@ class NeoLimeCard extends StatelessWidget {
                           borderRadius: BorderRadius.circular(999),
                           onTap: onCopy ?? () {
                             Clipboard.setData(ClipboardData(text: rawAccountNumber));
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text('Nomor rekening $bankName ($rawAccountNumber) disalin!'),
-                                duration: const Duration(seconds: 2),
-                                behavior: SnackBarBehavior.floating,
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                              ),
+                            NeoToast.show(
+                              context,
+                              'Nomor rekening $bankName ($rawAccountNumber) disalin! ⚡',
+                              type: NeoToastType.success,
                             );
                           },
                           child: Padding(

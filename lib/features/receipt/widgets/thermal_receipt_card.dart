@@ -6,6 +6,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/utils/currency_formatter.dart';
 import '../../../core/widgets/jagged_receipt_clipper.dart';
+import '../../../core/widgets/neo_toast.dart';
 import '../../bill_engine/models/split_breakdown.dart';
 import '../../bill_engine/providers/bill_session_provider.dart';
 import '../../onboarding/providers/user_profile_provider.dart';
@@ -268,12 +269,10 @@ class ThermalReceiptCard extends ConsumerWidget {
                       child: InkWell(
                         onTap: () {
                           Clipboard.setData(ClipboardData(text: accountNumber));
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text('Nomor rekening $bankName ($accountNumber) disalin!'),
-                              behavior: SnackBarBehavior.floating,
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                            ),
+                          NeoToast.show(
+                            context,
+                            'Nomor rekening $bankName ($accountNumber) disalin! ⚡',
+                            type: NeoToastType.success,
                           );
                         },
                         borderRadius: BorderRadius.circular(12),
@@ -349,12 +348,10 @@ class ThermalReceiptCard extends ConsumerWidget {
                         child: InkWell(
                           onTap: () {
                             Clipboard.setData(ClipboardData(text: userProfile.walletNumber));
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text('Nomor ${userProfile.walletName} (${userProfile.walletNumber}) disalin!'),
-                                behavior: SnackBarBehavior.floating,
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                              ),
+                            NeoToast.show(
+                              context,
+                              'Nomor ${userProfile.walletName} (${userProfile.walletNumber}) disalin! ⚡',
+                              type: NeoToastType.success,
                             );
                           },
                           borderRadius: BorderRadius.circular(12),
