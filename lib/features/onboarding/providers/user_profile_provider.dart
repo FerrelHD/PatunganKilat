@@ -22,6 +22,20 @@ class UserProfileNotifier extends StateNotifier<UserProfile> {
     );
   }
 
+  void syncFromPrefs(SharedPreferences prefs) {
+    final name = prefs.getString('user_name') ?? '';
+    final bankName = prefs.getString('user_bank') ?? 'BCA';
+    final accountNumber = prefs.getString('user_account') ?? '';
+    final isOnboarded = prefs.getBool('user_onboarded') ?? false;
+
+    state = UserProfile(
+      name: name,
+      bankName: bankName,
+      accountNumber: accountNumber,
+      isOnboarded: isOnboarded,
+    );
+  }
+
   Future<void> saveProfile({
     required String name,
     required String bankName,

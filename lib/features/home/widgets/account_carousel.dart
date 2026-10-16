@@ -5,6 +5,7 @@ import '../../../core/theme/app_typography.dart';
 import '../../../core/widgets/neo_dark_card.dart';
 import '../../../core/widgets/neo_lime_card.dart';
 import '../../onboarding/providers/user_profile_provider.dart';
+import 'edit_account_bottom_sheet.dart';
 
 class AccountCarousel extends ConsumerWidget {
   const AccountCarousel({super.key});
@@ -35,20 +36,12 @@ class AccountCarousel extends ConsumerWidget {
                 style: AppTypography.sectionHeading,
               ),
               InkWell(
-                onTap: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: const Text('Rekening baru dapat disimpan di penyimpanan lokal'),
-                      behavior: SnackBarBehavior.floating,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                    ),
-                  );
-                },
+                onTap: () => EditAccountBottomSheet.show(context),
                 borderRadius: BorderRadius.circular(8),
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
                   child: Text(
-                    '+ Tambah',
+                    '+ Atur Rekening',
                     style: AppTypography.cardTitle.copyWith(
                       color: AppColors.neoDark,
                       fontSize: 12,
@@ -65,14 +58,22 @@ class AccountCarousel extends ConsumerWidget {
           physics: const BouncingScrollPhysics(),
           child: Row(
             children: [
-              NeoLimeCard(
-                bankName: bankName,
-                holderName: holderName,
-                accountNumber: masked,
-                rawAccountNumber: rawNumber,
+              InkWell(
+                onTap: () => EditAccountBottomSheet.show(context),
+                borderRadius: BorderRadius.circular(28),
+                child: NeoLimeCard(
+                  bankName: bankName,
+                  holderName: holderName,
+                  accountNumber: masked,
+                  rawAccountNumber: rawNumber,
+                ),
               ),
               const SizedBox(width: 12),
-              const NeoDarkCard(),
+              InkWell(
+                onTap: () => EditAccountBottomSheet.show(context),
+                borderRadius: BorderRadius.circular(28),
+                child: const NeoDarkCard(),
+              ),
               const SizedBox(width: 4),
             ],
           ),

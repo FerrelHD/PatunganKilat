@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../bill_engine/providers/bill_session_provider.dart';
 import '../../friends/providers/saved_friends_provider.dart';
@@ -77,16 +78,28 @@ class _SplashScreenState extends ConsumerState<SplashScreen> with TickerProvider
   }
 
   Future<void> _checkNextScreen() async {
-    await Future<void>.delayed(const Duration(milliseconds: 2000));
+    final prefsFuture = SharedPreferences.getInstance();
+    final delayFuture = Future<void>.delayed(const Duration(milliseconds: 2000));
+
+    final results = await Future.wait([prefsFuture, delayFuture]);
+    final prefs = results[0] as SharedPreferences;
+
     if (!mounted) return;
 
-    final userProfile = ref.read(userProfileProvider);
+    final isOnboarded = prefs.getBool('user_onboarded') ?? false;
+    final userName = prefs.getString('user_name') ?? '';
+
+    // Synchronously hydrate state with loaded prefs
+    ref.read(userProfileProvider.notifier).syncFromPrefs(prefs);
+
+    final targetScreen = (isOnboarded && userName.trim().isNotEmpty)
+        ? const MainNavigationShell()
+        : const OnboardingScreen();
 
     Navigator.of(context).pushReplacement(
       PageRouteBuilder<void>(
         transitionDuration: const Duration(milliseconds: 600),
-        pageBuilder: (context, animation, secondaryAnimation) =>
-            userProfile.isOnboarded ? const MainNavigationShell() : const OnboardingScreen(),
+        pageBuilder: (context, animation, secondaryAnimation) => targetScreen,
         transitionsBuilder: (context, animation, secondaryAnimation, child) {
           return FadeTransition(opacity: animation, child: child);
         },
