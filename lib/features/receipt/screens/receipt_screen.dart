@@ -25,14 +25,14 @@ class ReceiptScreen extends ConsumerStatefulWidget {
 
 class _ReceiptScreenState extends ConsumerState<ReceiptScreen> {
   final GlobalKey _receiptRepaintKey = GlobalKey();
-  bool _isSharing = false;
+  bool _isSavingImage = false;
 
   String _getMonthName(int month) {
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
     return months[(month - 1).clamp(0, 11)];
   }
 
-  void _copyWhatsAppText() {
+  Future<void> _shareToWhatsApp() async {
     final session = ref.read(billSessionProvider);
     final calc = ref.read(splitCalculationProvider);
     final userProfile = ref.read(userProfileProvider);
@@ -45,32 +45,49 @@ class _ReceiptScreenState extends ConsumerState<ReceiptScreen> {
       accountHolder: userProfile.name.isNotEmpty ? userProfile.name : 'Saya',
     );
 
-    Clipboard.setData(ClipboardData(text: text));
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Text('Format rincian WhatsApp berhasil disalin ke Clipboard!'),
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      ),
-    );
+    await Clipboard.setData(ClipboardData(text: text));
+
+    final launched = await ReceiptShareUtil.launchWhatsAppShare(text);
+    if (!launched && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Rincian tersalin ke Clipboard! Buka WhatsApp untuk mengirim.'),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        ),
+      );
+    }
   }
 
-  Future<void> _shareReceiptImage() async {
+  Future<void> _saveReceiptImage() async {
     final session = ref.read(billSessionProvider);
-    setState(() => _isSharing = true);
+    setState(() => _isSavingImage = true);
 
     try {
-      await ReceiptShareUtil.captureAndShareReceipt(
+      final success = await ReceiptShareUtil.captureAndSaveReceipt(
         repaintBoundaryKey: _receiptRepaintKey,
         sessionTitle: session.sessionTitle,
       );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              success
+                  ? 'Struk siap dibagikan / tersimpan! 🧾⚡'
+                  : 'Gagal memproses gambar struk. Coba lagi.',
+            ),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          ),
+        );
+      }
     } finally {
-      if (mounted) setState(() => _isSharing = false);
+      if (mounted) setState(() => _isSavingImage = false);
     }
   }
 
   void _confirmCompleteSession() {
-    showDialog(
+    showDialog<void>(
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
@@ -244,25 +261,7 @@ class _ReceiptScreenState extends ConsumerState<ReceiptScreen> {
                     'Struk Patungan',
                     style: AppTypography.screenTitle,
                   ),
-                  Material(
-                    color: AppColors.neoLime,
-                    borderRadius: BorderRadius.circular(999),
-                    child: InkWell(
-                      onTap: _copyWhatsAppText,
-                      borderRadius: BorderRadius.circular(999),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                        child: Text(
-                          'Copy WA',
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w800,
-                            color: AppColors.neoDark,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
+                  const SizedBox(width: 40),
                 ],
               ),
             ),
@@ -356,7 +355,7 @@ class _ReceiptScreenState extends ConsumerState<ReceiptScreen> {
 
       // Bottom Action Bar
       bottomSheet: Container(
-        padding: const EdgeInsets.fromLTRB(20, 12, 20, 84),
+        padding: const EdgeInsets.fromLTRB(20, 10, 20, 84),
         decoration: BoxDecoration(
           color: Colors.white.withValues(alpha: 0.96),
           border: Border(top: BorderSide(color: Colors.black.withValues(alpha: 0.05))),
@@ -364,11 +363,12 @@ class _ReceiptScreenState extends ConsumerState<ReceiptScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            // Primary Action: Share ke WhatsApp
             Material(
               color: AppColors.neoDark,
               borderRadius: BorderRadius.circular(999),
               child: InkWell(
-                onTap: _isSharing ? null : _shareReceiptImage,
+                onTap: _shareToWhatsApp,
                 borderRadius: BorderRadius.circular(999),
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
@@ -382,7 +382,7 @@ class _ReceiptScreenState extends ConsumerState<ReceiptScreen> {
                       ),
                       const SizedBox(width: 8),
                       Text(
-                        _isSharing ? 'Menyiapkan Struk...' : 'Share Struk ke WA',
+                        'Share Rincian ke WhatsApp',
                         style: AppTypography.buttonText,
                       ),
                     ],
@@ -390,7 +390,42 @@ class _ReceiptScreenState extends ConsumerState<ReceiptScreen> {
                 ),
               ),
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: 8),
+
+            // Secondary Action: Simpan Gambar Struk PNG
+            Material(
+              color: AppColors.neoSoft,
+              borderRadius: BorderRadius.circular(999),
+              child: InkWell(
+                onTap: _isSavingImage ? null : _saveReceiptImage,
+                borderRadius: BorderRadius.circular(999),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.download_rounded,
+                        size: 18,
+                        color: _isSavingImage ? AppColors.neoMuted : AppColors.neoDark,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        _isSavingImage ? 'Menyiapkan Gambar...' : 'Simpan Gambar Struk (PNG)',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                          color: _isSavingImage ? AppColors.neoMuted : AppColors.neoDark,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 4),
+
+            // Tertiary: Selesaikan & Tutup Sesi
             InkWell(
               onTap: _confirmCompleteSession,
               borderRadius: BorderRadius.circular(999),
@@ -402,7 +437,7 @@ class _ReceiptScreenState extends ConsumerState<ReceiptScreen> {
                     const Icon(
                       Icons.check_circle_outline_rounded,
                       size: 16,
-                      color: AppColors.neoDark,
+                      color: AppColors.neoMuted,
                     ),
                     const SizedBox(width: 6),
                     Text(
@@ -410,7 +445,7 @@ class _ReceiptScreenState extends ConsumerState<ReceiptScreen> {
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 12,
                         fontWeight: FontWeight.w700,
-                        color: AppColors.neoDark,
+                        color: AppColors.neoMuted,
                       ),
                     ),
                   ],

@@ -47,7 +47,7 @@ class SavedFriendsNotifier extends StateNotifier<List<SavedFriend>> {
       final prefs = await SharedPreferences.getInstance();
       final raw = prefs.getString(_key);
       if (raw != null && raw.isNotEmpty) {
-        final List<dynamic> list = jsonDecode(raw);
+        final list = jsonDecode(raw) as List<dynamic>;
         state = list.map((e) => SavedFriend.fromJson(e as Map<String, dynamic>)).toList();
       }
     } catch (_) {}

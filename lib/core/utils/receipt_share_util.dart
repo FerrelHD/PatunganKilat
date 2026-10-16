@@ -1,12 +1,11 @@
-import 'dart:io';
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:share_plus/share_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../features/bill_engine/models/split_breakdown.dart';
 import '../../features/bill_engine/providers/bill_session_provider.dart';
 import 'currency_formatter.dart';
+import 'platform_file_saver.dart';
 
 class ReceiptShareUtil {
   ReceiptShareUtil._();
@@ -47,31 +46,47 @@ class ReceiptShareUtil {
     return buffer.toString();
   }
 
-  /// Captures a RepaintBoundary widget as high-res PNG image and shares via share_plus
-  static Future<void> captureAndShareReceipt({
+  /// Directly launches WhatsApp with pre-filled formatted summary
+  static Future<bool> launchWhatsAppShare(String text) async {
+    final encoded = Uri.encodeComponent(text);
+    final waUri = Uri.parse('https://wa.me/?text=$encoded');
+    try {
+      if (await canLaunchUrl(waUri)) {
+        return await launchUrl(waUri, mode: LaunchMode.externalApplication);
+      } else {
+        return await launchUrl(waUri);
+      }
+    } catch (e) {
+      debugPrint('Error launching WhatsApp: $e');
+      return false;
+    }
+  }
+
+  /// Captures a RepaintBoundary widget as high-res PNG image and saves/shares cross-platform
+  static Future<bool> captureAndSaveReceipt({
     required GlobalKey repaintBoundaryKey,
     required String sessionTitle,
   }) async {
     try {
       final boundary = repaintBoundaryKey.currentContext?.findRenderObject() as RenderRepaintBoundary?;
-      if (boundary == null) return;
+      if (boundary == null) return false;
 
       final image = await boundary.toImage(pixelRatio: 3.0);
       final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
-      if (byteData == null) return;
+      if (byteData == null) return false;
 
       final pngBytes = byteData.buffer.asUint8List();
-      final tempDir = await getTemporaryDirectory();
-      final fileName = 'PatunganKilat_${sessionTitle.replaceAll(' ', '_')}_Struk.png';
-      final file = await File('${tempDir.path}/$fileName').create();
-      await file.writeAsBytes(pngBytes);
+      final cleanTitle = sessionTitle.replaceAll(RegExp(r'\s+'), '_');
+      final fileName = 'PatunganKilat_${cleanTitle}_Struk.png';
 
-      await Share.shareXFiles(
-        [XFile(file.path)],
+      return await saveOrShareReceiptImage(
+        bytes: pngBytes,
+        fileName: fileName,
         text: 'Struk Patungan Kilat — $sessionTitle 🧾⚡',
       );
     } catch (e) {
-      debugPrint('Error sharing receipt image: $e');
+      debugPrint('Error saving receipt image: $e');
+      return false;
     }
   }
 }
