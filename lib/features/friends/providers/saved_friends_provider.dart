@@ -81,3 +81,4 @@ class SavedFriendsNotifier extends StateNotifier<List<SavedFriend>> {
 final savedFriendsProvider = StateNotifierProvider<SavedFriendsNotifier, List<SavedFriend>>((ref) {
   return SavedFriendsNotifier();
 });
+

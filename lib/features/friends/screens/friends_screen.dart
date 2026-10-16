@@ -387,3 +387,4 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
     );
   }
 }
+
