@@ -5,6 +5,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/widgets/neo_pill_button.dart';
 import '../../bill_engine/providers/bill_session_provider.dart';
+import '../../friends/providers/saved_friends_provider.dart';
 import '../../onboarding/providers/user_profile_provider.dart';
 
 class CreateSessionBottomSheet extends ConsumerStatefulWidget {
@@ -331,6 +332,77 @@ class _CreateSessionBottomSheetState extends ConsumerState<CreateSessionBottomSh
                   ),
                 ),
               ],
+            ),
+
+            // Quick select from saved friends
+            Builder(
+              builder: (context) {
+                final savedFriends = ref.watch(savedFriendsProvider);
+                if (savedFriends.isEmpty) return const SizedBox.shrink();
+
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 12),
+                    Text(
+                      'Pilih Cepat dari Teman Tersimpan:',
+                      style: AppTypography.captionBold.copyWith(fontSize: 10, color: AppColors.neoMuted),
+                    ),
+                    const SizedBox(height: 6),
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      physics: const BouncingScrollPhysics(),
+                      child: Row(
+                        children: savedFriends.map((sf) {
+                          final isAlreadyAdded = _friendNames.contains(sf.name);
+                          return Padding(
+                            padding: const EdgeInsets.only(right: 6),
+                            child: InkWell(
+                              onTap: isAlreadyAdded
+                                  ? null
+                                  : () {
+                                      setState(() {
+                                        _friendNames.add(sf.name);
+                                      });
+                                    },
+                              borderRadius: BorderRadius.circular(999),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                                decoration: BoxDecoration(
+                                  color: isAlreadyAdded ? AppColors.neoBg : Colors.white,
+                                  borderRadius: BorderRadius.circular(999),
+                                  border: Border.all(
+                                    color: isAlreadyAdded ? Colors.transparent : Colors.black.withValues(alpha: 0.08),
+                                  ),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      isAlreadyAdded ? Icons.check_rounded : Icons.add_rounded,
+                                      size: 12,
+                                      color: isAlreadyAdded ? AppColors.neoMuted : AppColors.neoDark,
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      sf.name,
+                                      style: GoogleFonts.plusJakartaSans(
+                                        fontSize: 11,
+                                        fontWeight: isAlreadyAdded ? FontWeight.w500 : FontWeight.w700,
+                                        color: isAlreadyAdded ? AppColors.neoMuted : AppColors.neoDark,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                    ),
+                  ],
+                );
+              },
             ),
 
             const SizedBox(height: 24),

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'core/theme/app_colors.dart';
 import 'core/theme/app_typography.dart';
+import 'features/friends/screens/friends_screen.dart';
 import 'features/home/screens/home_screen.dart';
 import 'features/onboarding/providers/user_profile_provider.dart';
 import 'features/onboarding/screens/splash_screen.dart';
@@ -62,12 +63,13 @@ class _MainNavigationShellState extends ConsumerState<MainNavigationShell> {
     final screens = [
       HomeScreen(
         onNavigateToSplitArena: () => _navigateToTab(1),
-        onNavigateToReceipt: () => _navigateToTab(2),
+        onNavigateToReceipt: () => _navigateToTab(3),
       ),
       SplitArenaScreen(
         onBack: () => _navigateToTab(0),
-        onNavigateToReceipt: () => _navigateToTab(2),
+        onNavigateToReceipt: () => _navigateToTab(3),
       ),
+      const FriendsScreen(),
       ReceiptScreen(
         onBack: () => _navigateToTab(1),
       ),
@@ -101,22 +103,13 @@ class _MainNavigationShellState extends ConsumerState<MainNavigationShell> {
                 activeIcon: Icons.calculate_rounded,
               ),
               _buildNavItem(
-                index: -1, // Toast info
+                index: 2,
                 label: 'Teman',
                 icon: Icons.people_outline_rounded,
                 activeIcon: Icons.people_rounded,
-                onTapOverride: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: const Text('Grup Tersimpan: Tongkrongan Kampus, Futsal Jumat, Kantor'),
-                      behavior: SnackBarBehavior.floating,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                    ),
-                  );
-                },
               ),
               _buildNavItem(
-                index: 2,
+                index: 3,
                 label: 'Struk',
                 icon: Icons.receipt_long_outlined,
                 activeIcon: Icons.receipt_long_rounded,
