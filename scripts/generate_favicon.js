@@ -88,41 +88,63 @@ function roundedRectDist(x, y, left, top, right, bottom, r) {
   return Math.sqrt(dx * dx + dy * dy) - r;
 }
 
-function makeIcon(size) {
-  const pad = size * 0.08;
-  const radius = size * 0.28;
-  const left = pad, top = pad, right = size - pad, bottom = size - pad;
+// Lightning bolt normalized coordinates (0..1)
+const boltNorm = [
+  [0.56, 0.20],
+  [0.34, 0.52],
+  [0.48, 0.52],
+  [0.42, 0.80],
+  [0.68, 0.46],
+  [0.52, 0.46]
+];
 
-  // Lightning bolt normalized coordinates (0..1)
-  const boltNorm = [
-    [0.56, 0.20],
-    [0.34, 0.52],
-    [0.48, 0.52],
-    [0.42, 0.80],
-    [0.68, 0.46],
-    [0.52, 0.46]
-  ];
+function makeIcon(size, isFavicon = false) {
   const boltPoly = boltNorm.map(([nx, ny]) => [nx * size, ny * size]);
 
-  return createPng(size, size, (u, v, x, y) => {
-    // Check distance to rounded card
-    const d = roundedRectDist(x, y, left, top, right, bottom, radius);
-    if (d > 0.5) {
-      return [0, 0, 0, 0]; // Transparent outside
+  // Background: Neo Dark #141518 (solid black-grey)
+  const bgR = 20, bgG = 21, bgB = 24;
+  // Foreground: Neo Lime #C5F536 (electric neon lime)
+  const fgR = 197, fgG = 245, fgB = 54;
+
+  const pad = size * 0.08;
+  const radius = size * 0.24;
+  const left = pad, top = pad, right = size - pad, bottom = size - pad;
+
+  // 4x anti-aliasing sub-pixel offsets
+  const subOffsets = [
+    [0.25, 0.25],
+    [0.75, 0.25],
+    [0.25, 0.75],
+    [0.75, 0.75],
+  ];
+
+  return createPng(size, size, (u, v, px, py) => {
+    if (isFavicon) {
+      const d = roundedRectDist(px, py, left, top, right, bottom, radius);
+      if (d > 0.5) return [0, 0, 0, 0];
+
+      let hits = 0;
+      for (const [ox, oy] of subOffsets) {
+        if (pointInPoly(px + ox, py + oy, boltPoly)) hits++;
+      }
+      const ratio = hits / 4;
+      const r = Math.round(bgR + (fgR - bgR) * ratio);
+      const g = Math.round(bgG + (fgG - bgG) * ratio);
+      const b = Math.round(bgB + (fgB - bgB) * ratio);
+      const alpha = d <= -0.5 ? 255 : Math.round((0.5 - d) * 255);
+      return [r, g, b, alpha];
     }
 
-    // Inside squircle
-    // Check if inside lightning bolt
-    const inBolt = pointInPoly(x, y, boltPoly);
-    if (inBolt) {
-      // Electric Acid Lime: #C5F536 -> [197, 245, 54]
-      return [197, 245, 54, 255];
+    // 100% full-bleed solid square for Apple Touch Icon & PWA (NO transparent pixels anywhere)
+    let hits = 0;
+    for (const [ox, oy] of subOffsets) {
+      if (pointInPoly(px + ox, py + oy, boltPoly)) hits++;
     }
-
-    // Border / Corner anti-aliasing
-    const alpha = d <= -0.5 ? 255 : Math.round((0.5 - d) * 255);
-    // Matte Dark: #121212 -> [18, 18, 18]
-    return [18, 18, 18, alpha];
+    const ratio = hits / 4;
+    const r = Math.round(bgR + (fgR - bgR) * ratio);
+    const g = Math.round(bgG + (fgG - bgG) * ratio);
+    const b = Math.round(bgB + (fgB - bgB) * ratio);
+    return [r, g, b, 255]; // Always solid opaque
   });
 }
 
@@ -132,13 +154,42 @@ const iconsDir = path.join(webDir, 'icons');
 
 if (!fs.existsSync(iconsDir)) fs.mkdirSync(iconsDir, { recursive: true });
 
-// Generate favicon (64x64)
-fs.writeFileSync(path.join(webDir, 'favicon.png'), makeIcon(64));
+// 1. Favicon (64x64 with soft squircle)
+fs.writeFileSync(path.join(webDir, 'favicon.png'), makeIcon(64, true));
 console.log('✓ Generated web/favicon.png');
 
-// Generate PWA icons
-fs.writeFileSync(path.join(iconsDir, 'Icon-192.png'), makeIcon(192));
+// 2. Official Apple Touch Icon (180x180 full-bleed solid square)
+fs.writeFileSync(path.join(iconsDir, 'apple-touch-icon.png'), makeIcon(180, false));
+console.log('✓ Generated web/icons/apple-touch-icon.png (180x180 solid)');
+
+// 3. PWA Icons (192x192 & 512x512 full-bleed solid square)
+fs.writeFileSync(path.join(iconsDir, 'Icon-192.png'), makeIcon(192, false));
 console.log('✓ Generated web/icons/Icon-192.png');
 
-fs.writeFileSync(path.join(iconsDir, 'Icon-512.png'), makeIcon(512));
+fs.writeFileSync(path.join(iconsDir, 'Icon-512.png'), makeIcon(512, false));
 console.log('✓ Generated web/icons/Icon-512.png');
+
+fs.writeFileSync(path.join(iconsDir, 'Icon-maskable-192.png'), makeIcon(192, false));
+console.log('✓ Generated web/icons/Icon-maskable-192.png');
+
+fs.writeFileSync(path.join(iconsDir, 'Icon-maskable-512.png'), makeIcon(512, false));
+console.log('✓ Generated web/icons/Icon-maskable-512.png');
+
+// 4. Android launcher icons
+const mipmapDirs = [
+  { dir: 'mipmap-mdpi', size: 48 },
+  { dir: 'mipmap-hdpi', size: 72 },
+  { dir: 'mipmap-xhdpi', size: 96 },
+  { dir: 'mipmap-xxhdpi', size: 144 },
+  { dir: 'mipmap-xxxhdpi', size: 192 },
+];
+
+for (const { dir, size } of mipmapDirs) {
+  const targetDir = path.join(rootDir, 'android', 'app', 'src', 'main', 'res', dir);
+  if (fs.existsSync(targetDir)) {
+    fs.writeFileSync(path.join(targetDir, 'ic_launcher.png'), makeIcon(size, false));
+    console.log(`✓ Generated android ${dir}/ic_launcher.png (${size}x${size})`);
+  }
+}
+
+console.log('⚡ All icons successfully generated with full-bleed solid styling!');
