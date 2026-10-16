@@ -1,9 +1,9 @@
 import 'dart:math';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'core/theme/app_colors.dart';
-import 'core/theme/app_typography.dart';
 import 'features/friends/screens/friends_screen.dart';
 import 'features/home/screens/home_screen.dart';
 import 'features/onboarding/providers/user_profile_provider.dart';
@@ -76,64 +76,89 @@ class _MainNavigationShellState extends ConsumerState<MainNavigationShell> {
     ];
 
     return Scaffold(
+      extendBody: true,
       body: IndexedStack(
         index: _currentIndex,
         children: screens,
       ),
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.96),
-          border: Border(top: BorderSide(color: Colors.black.withValues(alpha: 0.05))),
-        ),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        child: SafeArea(
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _buildNavItem(
-                index: 0,
-                label: 'Home',
-                icon: Icons.home_outlined,
-                activeIcon: Icons.home_rounded,
-              ),
-              _buildNavItem(
-                index: 1,
-                label: 'Split Bill',
-                icon: Icons.calculate_outlined,
-                activeIcon: Icons.calculate_rounded,
-              ),
-              _buildNavItem(
-                index: 2,
-                label: 'Teman',
-                icon: Icons.people_outline_rounded,
-                activeIcon: Icons.people_rounded,
-              ),
-              _buildNavItem(
-                index: 3,
-                label: 'Struk',
-                icon: Icons.receipt_long_outlined,
-                activeIcon: Icons.receipt_long_rounded,
-                customBadge: Container(
-                  width: 24,
-                  height: 24,
-                  decoration: BoxDecoration(
-                    color: AppColors.neoLime,
-                    shape: BoxShape.circle,
-                    border: Border.all(color: AppColors.neoDark, width: 1.5),
+      bottomNavigationBar: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(36),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.72),
+                  borderRadius: BorderRadius.circular(36),
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.85),
+                    width: 1.2,
                   ),
-                  child: Center(
-                    child: Text(
-                      userInitial,
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 9,
-                        fontWeight: FontWeight.w900,
-                        color: AppColors.neoDark,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.08),
+                      blurRadius: 28,
+                      offset: const Offset(0, 10),
+                      spreadRadius: -2,
+                    ),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    _buildNavItem(
+                      index: 0,
+                      label: 'Home',
+                      icon: Icons.home_outlined,
+                      activeIcon: Icons.home_rounded,
+                    ),
+                    _buildNavItem(
+                      index: 1,
+                      label: 'Split Bill',
+                      icon: Icons.calculate_outlined,
+                      activeIcon: Icons.calculate_rounded,
+                    ),
+                    _buildNavItem(
+                      index: 2,
+                      label: 'Teman',
+                      icon: Icons.people_outline_rounded,
+                      activeIcon: Icons.people_rounded,
+                    ),
+                    _buildNavItem(
+                      index: 3,
+                      label: 'Struk',
+                      icon: Icons.receipt_long_outlined,
+                      activeIcon: Icons.receipt_long_rounded,
+                      customBadge: (isActive) => Container(
+                        width: 20,
+                        height: 20,
+                        decoration: BoxDecoration(
+                          color: isActive ? AppColors.neoLime : Colors.white,
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: isActive ? AppColors.neoDark : Colors.black.withValues(alpha: 0.2),
+                            width: 1.2,
+                          ),
+                        ),
+                        child: Center(
+                          child: Text(
+                            userInitial,
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 8.5,
+                              fontWeight: FontWeight.w900,
+                              color: AppColors.neoDark,
+                            ),
+                          ),
+                        ),
                       ),
                     ),
-                  ),
+                  ],
                 ),
               ),
-            ],
+            ),
           ),
         ),
       ),
@@ -145,37 +170,56 @@ class _MainNavigationShellState extends ConsumerState<MainNavigationShell> {
     required String label,
     required IconData icon,
     required IconData activeIcon,
-    Widget? customBadge,
-    VoidCallback? onTapOverride,
+    Widget Function(bool isActive)? customBadge,
   }) {
     final isActive = _currentIndex == index;
 
-    return InkWell(
-      onTap: onTapOverride ?? () => _navigateToTab(index),
-      borderRadius: BorderRadius.circular(16),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (customBadge != null)
-              customBadge
-            else
-              Icon(
-                isActive ? activeIcon : icon,
-                size: 20,
-                color: isActive ? AppColors.neoDark : AppColors.neoMuted,
+    return Expanded(
+      child: GestureDetector(
+        onTap: () => _navigateToTab(index),
+        behavior: HitTestBehavior.opaque,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeOutCubic,
+          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+          decoration: BoxDecoration(
+            color: isActive ? AppColors.neoDark : Colors.transparent,
+            borderRadius: BorderRadius.circular(28),
+            boxShadow: isActive
+                ? [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.16),
+                      blurRadius: 10,
+                      offset: const Offset(0, 3),
+                    ),
+                  ]
+                : null,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              if (customBadge != null)
+                customBadge(isActive)
+              else
+                Icon(
+                  isActive ? activeIcon : icon,
+                  size: 19,
+                  color: isActive ? AppColors.neoLime : AppColors.neoDark.withValues(alpha: 0.6),
+                ),
+              const SizedBox(height: 3),
+              Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 10,
+                  fontWeight: isActive ? FontWeight.w800 : FontWeight.w600,
+                  color: isActive ? AppColors.neoLime : AppColors.neoDark.withValues(alpha: 0.65),
+                ),
               ),
-            const SizedBox(height: 3),
-            Text(
-              label,
-              style: AppTypography.captionBold.copyWith(
-                fontSize: 10,
-                fontWeight: isActive ? FontWeight.w800 : FontWeight.w600,
-                color: isActive ? AppColors.neoDark : AppColors.neoMuted,
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

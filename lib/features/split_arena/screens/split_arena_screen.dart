@@ -398,7 +398,7 @@ class SplitArenaScreen extends ConsumerWidget {
                         },
                       ),
 
-                    const SizedBox(height: 90), // Space for sticky bottom bar
+                    const SizedBox(height: 180), // Space for sticky bottom bar & floating dock
                   ],
                 ),
               ),
@@ -409,7 +409,7 @@ class SplitArenaScreen extends ConsumerWidget {
 
       // Sticky Bottom Bar
       bottomSheet: Container(
-        padding: const EdgeInsets.fromLTRB(20, 14, 20, 20),
+        padding: const EdgeInsets.fromLTRB(20, 14, 20, 84),
         decoration: BoxDecoration(
           color: Colors.white.withValues(alpha: 0.96),
           border: Border(top: BorderSide(color: Colors.black.withValues(alpha: 0.05))),

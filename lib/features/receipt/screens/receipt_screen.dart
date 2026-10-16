@@ -345,7 +345,7 @@ class _ReceiptScreenState extends ConsumerState<ReceiptScreen> {
                       ),
                     ),
 
-                    const SizedBox(height: 140),
+                    const SizedBox(height: 200),
                   ],
                 ),
               ),
@@ -356,7 +356,7 @@ class _ReceiptScreenState extends ConsumerState<ReceiptScreen> {
 
       // Bottom Action Bar
       bottomSheet: Container(
-        padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
+        padding: const EdgeInsets.fromLTRB(20, 12, 20, 84),
         decoration: BoxDecoration(
           color: Colors.white.withValues(alpha: 0.96),
           border: Border(top: BorderSide(color: Colors.black.withValues(alpha: 0.05))),
