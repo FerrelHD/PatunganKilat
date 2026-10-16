@@ -69,6 +69,45 @@ class _ReceiptScreenState extends ConsumerState<ReceiptScreen> {
     }
   }
 
+  void _confirmCompleteSession() {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Text('Selesaikan Patungan?', style: AppTypography.cardTitle),
+        content: Text(
+          'Pastikan semua teman sudah mentransfer atau mencatat rinciannya. Sesi patungan ini akan ditutup dan meja patungan akan kembali bersih.',
+          style: AppTypography.bodyMuted,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Batal', style: TextStyle(color: AppColors.neoMuted)),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: AppColors.neoDark,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            onPressed: () {
+              Navigator.pop(ctx);
+              ref.read(billSessionProvider.notifier).completeSession();
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: const Text('Sesi patungan selesai! Meja patungan sudah bersih 🎉'),
+                  behavior: SnackBarBehavior.floating,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                ),
+              );
+              widget.onBack();
+            },
+            child: const Text('Ya, Selesaikan', style: TextStyle(color: AppColors.neoLime, fontWeight: FontWeight.w700)),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final session = ref.watch(billSessionProvider);
@@ -306,7 +345,7 @@ class _ReceiptScreenState extends ConsumerState<ReceiptScreen> {
                       ),
                     ),
 
-                    const SizedBox(height: 100),
+                    const SizedBox(height: 140),
                   ],
                 ),
               ),
@@ -317,36 +356,68 @@ class _ReceiptScreenState extends ConsumerState<ReceiptScreen> {
 
       // Bottom Action Bar
       bottomSheet: Container(
-        padding: const EdgeInsets.fromLTRB(20, 14, 20, 20),
+        padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
         decoration: BoxDecoration(
           color: Colors.white.withValues(alpha: 0.96),
           border: Border(top: BorderSide(color: Colors.black.withValues(alpha: 0.05))),
         ),
-        child: Material(
-          color: AppColors.neoDark,
-          borderRadius: BorderRadius.circular(999),
-          child: InkWell(
-            onTap: _isSharing ? null : _shareReceiptImage,
-            borderRadius: BorderRadius.circular(999),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(
-                    Icons.chat_bubble_rounded,
-                    size: 18,
-                    color: AppColors.neoLime,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Material(
+              color: AppColors.neoDark,
+              borderRadius: BorderRadius.circular(999),
+              child: InkWell(
+                onTap: _isSharing ? null : _shareReceiptImage,
+                borderRadius: BorderRadius.circular(999),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(
+                        Icons.chat_bubble_rounded,
+                        size: 18,
+                        color: AppColors.neoLime,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        _isSharing ? 'Menyiapkan Struk...' : 'Share Struk ke WA',
+                        style: AppTypography.buttonText,
+                      ),
+                    ],
                   ),
-                  const SizedBox(width: 8),
-                  Text(
-                    _isSharing ? 'Menyiapkan Struk...' : 'Share Struk ke WA',
-                    style: AppTypography.buttonText,
-                  ),
-                ],
+                ),
               ),
             ),
-          ),
+            const SizedBox(height: 6),
+            InkWell(
+              onTap: _confirmCompleteSession,
+              borderRadius: BorderRadius.circular(999),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(
+                      Icons.check_circle_outline_rounded,
+                      size: 16,
+                      color: AppColors.neoDark,
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      'Selesaikan & Tutup Sesi Ini',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.neoDark,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );

@@ -72,6 +72,42 @@ class _CreateSessionBottomSheetState extends ConsumerState<CreateSessionBottomSh
       return;
     }
 
+    final activeSession = ref.read(billSessionProvider);
+    if (activeSession.hasActiveSession) {
+      showDialog(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: Text('Mulai Sesi Baru?', style: AppTypography.cardTitle),
+          content: Text(
+            'Sesi "${activeSession.sessionTitle}" saat ini sedang berjalan. Apakah kamu yakin ingin menggantinya dengan sesi baru?',
+            style: AppTypography.bodyMuted,
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Batal', style: TextStyle(color: AppColors.neoMuted)),
+            ),
+            FilledButton(
+              style: FilledButton.styleFrom(
+                backgroundColor: AppColors.neoDark,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              onPressed: () {
+                Navigator.pop(ctx);
+                _executeStartSession(title);
+              },
+              child: const Text('Ganti Sesi', style: TextStyle(color: AppColors.neoLime, fontWeight: FontWeight.w700)),
+            ),
+          ],
+        ),
+      );
+    } else {
+      _executeStartSession(title);
+    }
+  }
+
+  void _executeStartSession(String title) {
     final userProfile = ref.read(userProfileProvider);
     final creatorName = userProfile.name.isNotEmpty ? userProfile.name : 'Saya';
 

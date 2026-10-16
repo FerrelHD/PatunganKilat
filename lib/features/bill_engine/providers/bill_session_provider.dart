@@ -1,4 +1,6 @@
+import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../models/friend.dart';
 import '../models/menu_item.dart';
 import '../models/split_breakdown.dart';
@@ -51,6 +53,36 @@ class BillSessionState {
     );
   }
 
+  Map<String, dynamic> toJson() => {
+    'hasActiveSession': hasActiveSession,
+    'sessionTitle': sessionTitle,
+    'friends': friends.map((f) => f.toJson()).toList(),
+    'items': items.map((i) => i.toJson()).toList(),
+    'activeFriendId': activeFriendId,
+    'taxEnabled': taxEnabled,
+    'serviceEnabled': serviceEnabled,
+    'discountAmount': discountAmount,
+    'hideBalance': hideBalance,
+  };
+
+  factory BillSessionState.fromJson(Map<String, dynamic> json) {
+    return BillSessionState(
+      hasActiveSession: (json['hasActiveSession'] as bool?) ?? false,
+      sessionTitle: (json['sessionTitle'] as String?) ?? '',
+      friends: ((json['friends'] as List<dynamic>?) ?? [])
+          .map((f) => Friend.fromJson(f as Map<String, dynamic>))
+          .toList(),
+      items: ((json['items'] as List<dynamic>?) ?? [])
+          .map((i) => MenuItem.fromJson(i as Map<String, dynamic>))
+          .toList(),
+      activeFriendId: (json['activeFriendId'] as String?) ?? '',
+      taxEnabled: (json['taxEnabled'] as bool?) ?? true,
+      serviceEnabled: (json['serviceEnabled'] as bool?) ?? false,
+      discountAmount: (json['discountAmount'] as int?) ?? 0,
+      hideBalance: (json['hideBalance'] as bool?) ?? false,
+    );
+  }
+
   static BillSessionState empty() {
     return const BillSessionState(
       hasActiveSession: false,
@@ -96,7 +128,33 @@ class BillSessionState {
 }
 
 class BillSessionNotifier extends StateNotifier<BillSessionState> {
-  BillSessionNotifier() : super(BillSessionState.empty());
+  static const _storageKey = 'pk_active_bill_session';
+
+  BillSessionNotifier() : super(BillSessionState.empty()) {
+    _loadFromStorage();
+  }
+
+  Future<void> _loadFromStorage() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final raw = prefs.getString(_storageKey);
+      if (raw != null && raw.isNotEmpty) {
+        final decoded = jsonDecode(raw) as Map<String, dynamic>;
+        state = BillSessionState.fromJson(decoded);
+      }
+    } catch (_) {}
+  }
+
+  Future<void> _saveToStorage() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      if (state.hasActiveSession) {
+        await prefs.setString(_storageKey, jsonEncode(state.toJson()));
+      } else {
+        await prefs.remove(_storageKey);
+      }
+    } catch (_) {}
+  }
 
   static const List<int> discountOptions = [0, 20000, 30000, 50000];
 
@@ -138,10 +196,12 @@ class BillSessionNotifier extends StateNotifier<BillSessionState> {
       discountAmount: 0,
       hideBalance: false,
     );
+    _saveToStorage();
   }
 
   void selectActiveFriend(String friendId) {
     state = state.copyWith(activeFriendId: friendId);
+    _saveToStorage();
   }
 
   void toggleItemAssignment(String itemId, String friendId) {
@@ -158,20 +218,24 @@ class BillSessionNotifier extends StateNotifier<BillSessionState> {
     }).toList();
 
     state = state.copyWith(items: updatedItems);
+    _saveToStorage();
   }
 
   void toggleTax() {
     state = state.copyWith(taxEnabled: !state.taxEnabled);
+    _saveToStorage();
   }
 
   void toggleService() {
     state = state.copyWith(serviceEnabled: !state.serviceEnabled);
+    _saveToStorage();
   }
 
   void cycleDiscount() {
     final currentIndex = discountOptions.indexOf(state.discountAmount);
     final nextIndex = (currentIndex + 1) % discountOptions.length;
     state = state.copyWith(discountAmount: discountOptions[nextIndex]);
+    _saveToStorage();
   }
 
   void splitAllEqually() {
@@ -181,10 +245,12 @@ class BillSessionNotifier extends StateNotifier<BillSessionState> {
     }).toList();
 
     state = state.copyWith(items: updatedItems);
+    _saveToStorage();
   }
 
   void toggleHideBalance() {
     state = state.copyWith(hideBalance: !state.hideBalance);
+    _saveToStorage();
   }
 
   void addNewMenuItem(String name, int price, String emoji) {
@@ -201,14 +267,22 @@ class BillSessionNotifier extends StateNotifier<BillSessionState> {
     );
 
     state = state.copyWith(items: [newItem, ...state.items]);
+    _saveToStorage();
   }
 
   void loadDemoData() {
     state = BillSessionState.demoPreset();
+    _saveToStorage();
   }
 
   void resetSession() {
     state = BillSessionState.empty();
+    _saveToStorage();
+  }
+
+  void completeSession() {
+    state = BillSessionState.empty();
+    _saveToStorage();
   }
 }
 

@@ -39,10 +39,34 @@ class RecentSessionsCard extends ConsumerWidget {
                 style: AppTypography.sectionHeading,
               ),
               if (session.hasActiveSession)
-                Text(
-                  '1 Sesi',
-                  style: AppTypography.captionBold.copyWith(
-                    fontWeight: FontWeight.w600,
+                InkWell(
+                  onTap: onStartNewSession,
+                  borderRadius: BorderRadius.circular(999),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: AppColors.neoDark,
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(
+                          Icons.add_rounded,
+                          size: 14,
+                          color: AppColors.neoLime,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          'Sesi Baru',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.neoLime,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
             ],
