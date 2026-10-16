@@ -17,7 +17,9 @@ class OnboardingScreen extends ConsumerStatefulWidget {
 class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   final _nameController = TextEditingController();
   final _accountController = TextEditingController();
+  final _walletController = TextEditingController();
   String _selectedBank = 'BCA';
+  String _selectedWallet = 'GoPay';
 
   final List<String> _bankOptions = [
     'BCA',
@@ -25,15 +27,22 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     'BNI',
     'BRI',
     'SeaBank',
+    'CIMB',
+    'Jago',
+  ];
+
+  final List<String> _walletOptions = [
     'GoPay',
     'OVO',
     'Dana',
+    'ShopeePay',
   ];
 
   @override
   void dispose() {
     _nameController.dispose();
     _accountController.dispose();
+    _walletController.dispose();
     super.dispose();
   }
 
@@ -54,6 +63,8 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
       name: name,
       bankName: _selectedBank,
       accountNumber: _accountController.text.trim(),
+      walletName: _selectedWallet,
+      walletNumber: _walletController.text.trim(),
     );
 
     if (!mounted) return;
@@ -126,7 +137,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
               ),
               const SizedBox(height: 8),
               Text(
-                'Siapkan nama dan rekening kamu sekali saja agar langsung tercetak rapi di struk penagihan.',
+                'Siapkan rekening talangan sekali saja agar langsung tercetak rapi di struk penagihan.',
                 style: AppTypography.bodyMuted.copyWith(fontSize: 13, height: 1.4),
               ),
 
@@ -170,10 +181,30 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                       ),
                     ),
 
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 22),
 
                     // Field 2: Bank Selection
-                    Text('Bank / E-Wallet Transfer', style: AppTypography.cardTitle.copyWith(fontSize: 12)),
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: AppColors.neoDark,
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            'UTAMA',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 9,
+                              fontWeight: FontWeight.w800,
+                              color: AppColors.neoLime,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text('Rekening Bank', style: AppTypography.cardTitle.copyWith(fontSize: 12)),
+                      ],
+                    ),
                     const SizedBox(height: 8),
                     Wrap(
                       spacing: 8,
@@ -200,12 +231,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                         );
                       }).toList(),
                     ),
-
-                    const SizedBox(height: 20),
-
-                    // Field 3: Account Number
-                    Text('Nomor Rekening / No HP', style: AppTypography.cardTitle.copyWith(fontSize: 12)),
-                    const SizedBox(height: 6),
+                    const SizedBox(height: 10),
                     TextField(
                       controller: _accountController,
                       keyboardType: TextInputType.number,
@@ -215,7 +241,83 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                         color: AppColors.neoDark,
                       ),
                       decoration: InputDecoration(
-                        hintText: 'Contoh: 682044918821',
+                        hintText: 'Nomor Rekening (Contoh: 682044918821)',
+                        hintStyle: GoogleFonts.jetBrainsMono(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                          color: AppColors.neoMuted,
+                        ),
+                        filled: true,
+                        fillColor: AppColors.neoBg,
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(18),
+                          borderSide: BorderSide.none,
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 22),
+
+                    // Field 3: E-Wallet (Optional)
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: AppColors.neoLime,
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            'OPSIONAL',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 9,
+                              fontWeight: FontWeight.w800,
+                              color: AppColors.neoDark,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text('Akun E-Wallet', style: AppTypography.cardTitle.copyWith(fontSize: 12)),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: _walletOptions.map((wallet) {
+                        final isSelected = wallet == _selectedWallet;
+                        return ChoiceChip(
+                          label: Text(wallet),
+                          selected: isSelected,
+                          onSelected: (selected) {
+                            if (selected) setState(() => _selectedWallet = wallet);
+                          },
+                          labelStyle: GoogleFonts.plusJakartaSans(
+                            fontSize: 11,
+                            fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+                            color: isSelected ? AppColors.neoDark : AppColors.neoMuted,
+                          ),
+                          selectedColor: AppColors.neoLime,
+                          backgroundColor: AppColors.neoBg,
+                          side: BorderSide(
+                            color: isSelected ? AppColors.neoDark.withValues(alpha: 0.2) : Colors.transparent,
+                          ),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
+                        );
+                      }).toList(),
+                    ),
+                    const SizedBox(height: 10),
+                    TextField(
+                      controller: _walletController,
+                      keyboardType: TextInputType.phone,
+                      style: GoogleFonts.jetBrainsMono(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.neoDark,
+                      ),
+                      decoration: InputDecoration(
+                        hintText: 'Nomor HP E-Wallet (Kosongkan jika belum ada)',
                         hintStyle: GoogleFonts.jetBrainsMono(
                           fontSize: 13,
                           fontWeight: FontWeight.w500,

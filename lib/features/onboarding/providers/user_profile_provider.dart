@@ -9,29 +9,23 @@ class UserProfileNotifier extends StateNotifier<UserProfile> {
 
   Future<void> _loadProfile() async {
     final prefs = await SharedPreferences.getInstance();
-    final name = prefs.getString('user_name') ?? '';
-    final bankName = prefs.getString('user_bank') ?? 'BCA';
-    final accountNumber = prefs.getString('user_account') ?? '';
-    final isOnboarded = prefs.getBool('user_onboarded') ?? false;
-
-    state = UserProfile(
-      name: name,
-      bankName: bankName,
-      accountNumber: accountNumber,
-      isOnboarded: isOnboarded,
-    );
+    syncFromPrefs(prefs);
   }
 
   void syncFromPrefs(SharedPreferences prefs) {
     final name = prefs.getString('user_name') ?? '';
     final bankName = prefs.getString('user_bank') ?? 'BCA';
     final accountNumber = prefs.getString('user_account') ?? '';
+    final walletName = prefs.getString('user_wallet_name') ?? 'GoPay';
+    final walletNumber = prefs.getString('user_wallet_number') ?? '';
     final isOnboarded = prefs.getBool('user_onboarded') ?? false;
 
     state = UserProfile(
       name: name,
       bankName: bankName,
       accountNumber: accountNumber,
+      walletName: walletName,
+      walletNumber: walletNumber,
       isOnboarded: isOnboarded,
     );
   }
@@ -40,17 +34,23 @@ class UserProfileNotifier extends StateNotifier<UserProfile> {
     required String name,
     required String bankName,
     required String accountNumber,
+    String walletName = 'GoPay',
+    String walletNumber = '',
   }) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('user_name', name);
     await prefs.setString('user_bank', bankName);
     await prefs.setString('user_account', accountNumber);
+    await prefs.setString('user_wallet_name', walletName);
+    await prefs.setString('user_wallet_number', walletNumber);
     await prefs.setBool('user_onboarded', true);
 
     state = UserProfile(
       name: name,
       bankName: bankName,
       accountNumber: accountNumber,
+      walletName: walletName,
+      walletNumber: walletNumber,
       isOnboarded: true,
     );
   }

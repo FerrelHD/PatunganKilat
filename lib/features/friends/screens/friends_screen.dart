@@ -27,7 +27,7 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
     final nameController = TextEditingController();
     String chosenGroup = _groupOptions.first;
 
-    showModalBottomSheet(
+    showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
@@ -139,7 +139,7 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
   }
 
   void _confirmDeleteFriend(BuildContext context, SavedFriend friend) {
-    showDialog(
+    showDialog<void>(
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),

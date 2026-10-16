@@ -211,7 +211,7 @@ class ThermalReceiptCard extends ConsumerWidget {
 
               const SizedBox(height: 16),
 
-              // Payment Info Box
+              // Payment Info Box: Primary Bank
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
@@ -232,11 +232,11 @@ class ThermalReceiptCard extends ConsumerWidget {
                           ),
                           child: const Center(
                             child: Text(
-                              'QR',
+                              'BANK',
                               style: TextStyle(
                                 color: AppColors.neoLime,
                                 fontWeight: FontWeight.w900,
-                                fontSize: 13,
+                                fontSize: 9.5,
                               ),
                             ),
                           ),
@@ -289,6 +289,88 @@ class ThermalReceiptCard extends ConsumerWidget {
                   ],
                 ),
               ),
+
+              // Payment Info Box: Optional E-Wallet (if configured)
+              if (userProfile.hasWallet) ...[
+                const SizedBox(height: 8),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: AppColors.neoBg,
+                    borderRadius: BorderRadius.circular(18),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            width: 36,
+                            height: 36,
+                            decoration: BoxDecoration(
+                              color: AppColors.neoDark,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Center(
+                              child: Text(
+                                userProfile.walletName.substring(0, userProfile.walletName.length.clamp(0, 3)).toUpperCase(),
+                                style: const TextStyle(
+                                  color: AppColors.neoLime,
+                                  fontWeight: FontWeight.w900,
+                                  fontSize: 10,
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'OPSI E-WALLET: ${userProfile.walletName.toUpperCase()}',
+                                style: AppTypography.captionBold.copyWith(fontSize: 9),
+                              ),
+                              const SizedBox(height: 1),
+                              Text(
+                                userProfile.walletNumber,
+                                style: AppTypography.monoAccountNumber.copyWith(fontSize: 12),
+                              ),
+                              Text(
+                                'a.n. $accountHolder',
+                                style: AppTypography.bodyMuted.copyWith(fontSize: 10),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                      Material(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        child: InkWell(
+                          onTap: () {
+                            Clipboard.setData(ClipboardData(text: userProfile.walletNumber));
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('Nomor ${userProfile.walletName} (${userProfile.walletNumber}) disalin!'),
+                                behavior: SnackBarBehavior.floating,
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                              ),
+                            );
+                          },
+                          borderRadius: BorderRadius.circular(12),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                            child: Text(
+                              'Salin',
+                              style: AppTypography.cardTitle.copyWith(fontSize: 11),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ],
           ),
         ),

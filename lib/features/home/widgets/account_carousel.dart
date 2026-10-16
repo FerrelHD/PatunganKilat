@@ -15,6 +15,14 @@ class AccountCarousel extends ConsumerWidget {
     return '•••• ${raw.substring(raw.length - 4)}';
   }
 
+  String _maskPhone(String raw) {
+    if (raw.length <= 4) return raw;
+    if (raw.length >= 8) {
+      return '${raw.substring(0, 4)} •••• ${raw.substring(raw.length - 4)}';
+    }
+    return '•••• ${raw.substring(raw.length - 4)}';
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final userProfile = ref.watch(userProfileProvider);
@@ -22,6 +30,11 @@ class AccountCarousel extends ConsumerWidget {
     final holderName = userProfile.name.isNotEmpty ? userProfile.name : 'Saya';
     final rawNumber = userProfile.accountNumber.isNotEmpty ? userProfile.accountNumber : '682044918821';
     final masked = _maskAccount(rawNumber);
+
+    final hasWallet = userProfile.hasWallet;
+    final walletName = userProfile.walletName.isNotEmpty ? userProfile.walletName : 'GoPay';
+    final rawPhone = userProfile.walletNumber;
+    final maskedPhone = _maskPhone(rawPhone);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -72,7 +85,13 @@ class AccountCarousel extends ConsumerWidget {
               InkWell(
                 onTap: () => EditAccountBottomSheet.show(context),
                 borderRadius: BorderRadius.circular(28),
-                child: const NeoDarkCard(),
+                child: NeoDarkCard(
+                  walletName: walletName,
+                  phoneNumber: maskedPhone,
+                  rawPhoneNumber: rawPhone,
+                  hasWallet: hasWallet,
+                  onAdd: () => EditAccountBottomSheet.show(context),
+                ),
               ),
               const SizedBox(width: 4),
             ],

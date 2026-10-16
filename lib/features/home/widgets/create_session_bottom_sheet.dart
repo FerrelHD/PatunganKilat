@@ -75,7 +75,7 @@ class _CreateSessionBottomSheetState extends ConsumerState<CreateSessionBottomSh
 
     final activeSession = ref.read(billSessionProvider);
     if (activeSession.hasActiveSession) {
-      showDialog(
+      showDialog<void>(
         context: context,
         builder: (ctx) => AlertDialog(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),

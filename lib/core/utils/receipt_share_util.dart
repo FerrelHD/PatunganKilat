@@ -17,6 +17,8 @@ class ReceiptShareUtil {
     String bankName = 'BCA',
     String accountNumber = '682044918821',
     String accountHolder = 'Raka Pratama',
+    String walletName = '',
+    String walletNumber = '',
   }) {
     final buffer = StringBuffer();
     buffer.writeln('*🧾 PATUNGANKILAT — ${session.sessionTitle.toUpperCase()}*');
@@ -41,6 +43,10 @@ class ReceiptShareUtil {
     buffer.writeln('--------------------------------');
     buffer.writeln('Total Tagihan: *${CurrencyFormatter.formatRp(calc.grandTotal)}*');
     buffer.writeln('Transfer $bankName: *$accountNumber* a.n $accountHolder');
+    if (walletNumber.trim().isNotEmpty) {
+      final wName = walletName.trim().isNotEmpty ? walletName.trim() : 'E-Wallet';
+      buffer.writeln('Atau $wName: *$walletNumber* a.n $accountHolder');
+    }
     buffer.writeln('\n_Dihitung otomatis via PatunganKilat ⚡_');
 
     return buffer.toString();

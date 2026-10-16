@@ -43,6 +43,8 @@ class _ReceiptScreenState extends ConsumerState<ReceiptScreen> {
       bankName: userProfile.bankName.isNotEmpty ? userProfile.bankName : 'BCA',
       accountNumber: userProfile.accountNumber.isNotEmpty ? userProfile.accountNumber : '-',
       accountHolder: userProfile.name.isNotEmpty ? userProfile.name : 'Saya',
+      walletName: userProfile.walletName,
+      walletNumber: userProfile.walletNumber,
     );
 
     await Clipboard.setData(ClipboardData(text: text));
