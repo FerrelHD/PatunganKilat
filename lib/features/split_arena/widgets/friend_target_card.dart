@@ -73,8 +73,8 @@ class FriendTargetCard extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Container(
-                        width: 22,
-                        height: 22,
+                        width: 24,
+                        height: 24,
                         decoration: BoxDecoration(
                           color: avatarBg,
                           shape: BoxShape.circle,
@@ -83,7 +83,7 @@ class FriendTargetCard extends StatelessWidget {
                           child: Text(
                             friend.avatarInitial,
                             style: GoogleFonts.plusJakartaSans(
-                              fontSize: 10,
+                              fontSize: 11,
                               fontWeight: FontWeight.w900,
                               color: avatarText,
                             ),
@@ -107,7 +107,7 @@ class FriendTargetCard extends StatelessWidget {
                       Text(
                         friend.name,
                         style: GoogleFonts.plusJakartaSans(
-                          fontSize: 11,
+                          fontSize: 11.5,
                           fontWeight: FontWeight.w800,
                           color: textColor,
                         ),
@@ -118,7 +118,7 @@ class FriendTargetCard extends StatelessWidget {
                       Text(
                         CurrencyFormatter.formatShortRp(totalAmount),
                         style: GoogleFonts.jetBrainsMono(
-                          fontSize: 10,
+                          fontSize: 10.5,
                           fontWeight: FontWeight.w700,
                           color: friend.theme == 'dark' ? AppColors.neoLime : textColor.withValues(alpha: 0.75),
                         ),

@@ -242,28 +242,46 @@ class SplitArenaScreen extends ConsumerWidget {
                       ],
                     ),
                     const SizedBox(height: 10),
-                    Row(
-                      children: session.friends.map((friend) {
-                        final breakdown = calc.breakdowns.firstWhere(
-                          (b) => b.friend.id == friend.id,
-                          orElse: () => calc.breakdowns.first,
-                        );
+                    LayoutBuilder(
+                      builder: (context, constraints) {
+                        final count = session.friends.length;
+                        final isMultiFriend = count > 3;
+                        final cardWidth = isMultiFriend
+                            ? 94.0
+                            : (constraints.maxWidth - (count > 1 ? (count - 1) * 8 : 0)) / (count > 0 ? count : 1);
 
-                        return Expanded(
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 3),
-                            child: FriendTargetCard(
-                              friend: friend,
-                              totalAmount: breakdown.finalAmount,
-                              isSelected: friend.id == session.activeFriendId,
-                              onTap: () => notifier.selectActiveFriend(friend.id),
-                              onDropItem: (item) {
-                                notifier.toggleItemAssignment(item.id, friend.id);
-                              },
-                            ),
+                        return SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          physics: const BouncingScrollPhysics(),
+                          clipBehavior: Clip.none,
+                          child: Row(
+                            children: session.friends.map((friend) {
+                              final breakdown = calc.breakdowns.firstWhere(
+                                (b) => b.friend.id == friend.id,
+                                orElse: () => calc.breakdowns.first,
+                              );
+
+                              final isLast = friend.id == session.friends.last.id;
+
+                              return Padding(
+                                padding: EdgeInsets.only(right: isLast ? 0 : 8),
+                                child: SizedBox(
+                                  width: cardWidth,
+                                  child: FriendTargetCard(
+                                    friend: friend,
+                                    totalAmount: breakdown.finalAmount,
+                                    isSelected: friend.id == session.activeFriendId,
+                                    onTap: () => notifier.selectActiveFriend(friend.id),
+                                    onDropItem: (item) {
+                                      notifier.toggleItemAssignment(item.id, friend.id);
+                                    },
+                                  ),
+                                ),
+                              );
+                            }).toList(),
                           ),
                         );
-                      }).toList(),
+                      },
                     ),
 
                     const SizedBox(height: 18),

@@ -3,7 +3,9 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'core/theme/app_colors.dart';
+import 'features/bill_engine/providers/bill_session_provider.dart';
 import 'features/friends/screens/friends_screen.dart';
 import 'features/home/screens/home_screen.dart';
 import 'features/onboarding/providers/user_profile_provider.dart';
@@ -49,8 +51,32 @@ class MainNavigationShell extends ConsumerStatefulWidget {
 class _MainNavigationShellState extends ConsumerState<MainNavigationShell> {
   int _currentIndex = 0;
 
+  @override
+  void initState() {
+    super.initState();
+    _restoreLastTab();
+  }
+
+  Future<void> _restoreLastTab() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final lastTab = prefs.getInt('pk_last_active_tab');
+      final hasActiveSession = ref.read(billSessionProvider).hasActiveSession;
+      if (mounted) {
+        if (lastTab != null && lastTab >= 0 && lastTab <= 3) {
+          setState(() => _currentIndex = lastTab);
+        } else if (hasActiveSession) {
+          setState(() => _currentIndex = 1);
+        }
+      }
+    } catch (_) {}
+  }
+
   void _navigateToTab(int index) {
     setState(() => _currentIndex = index);
+    SharedPreferences.getInstance().then((prefs) {
+      prefs.setInt('pk_last_active_tab', index);
+    }).catchError((_) {});
   }
 
   @override

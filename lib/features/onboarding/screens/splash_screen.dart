@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../bill_engine/providers/bill_session_provider.dart';
+import '../../friends/providers/saved_friends_provider.dart';
 import '../providers/user_profile_provider.dart';
 import 'onboarding_screen.dart';
 import '../../../main.dart';
@@ -65,6 +67,10 @@ class _SplashScreenState extends ConsumerState<SplashScreen> with TickerProvider
       vsync: this,
       duration: const Duration(milliseconds: 1200),
     )..repeat(reverse: true);
+
+    // Warm up providers so localStorage loads during splash animation
+    ref.read(billSessionProvider);
+    ref.read(savedFriendsProvider);
 
     _entranceController.forward();
     _checkNextScreen();
