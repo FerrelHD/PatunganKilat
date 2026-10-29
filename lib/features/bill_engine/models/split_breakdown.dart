@@ -5,13 +5,27 @@ class FriendItemShare {
   final double sharePrice;
   final bool isShared;
   final int sharedCount;
+  final int portion;
+  final int totalPortions;
 
   const FriendItemShare({
     required this.itemName,
     required this.sharePrice,
     required this.isShared,
     required this.sharedCount,
+    this.portion = 1,
+    this.totalPortions = 1,
   });
+
+  /// User-friendly label for display on receipts and messages.
+  /// E.g. "2/3 porsi", "1/2", or empty if 100% individual.
+  String get shareDetailLabel {
+    if (!isShared) return '';
+    if (portion == 1 && totalPortions == sharedCount) {
+      return '1/$sharedCount';
+    }
+    return '$portion/$totalPortions porsi';
+  }
 }
 
 class FriendBreakdown {

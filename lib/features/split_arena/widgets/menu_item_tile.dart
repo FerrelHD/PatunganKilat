@@ -13,6 +13,7 @@ class MenuItemTile extends StatelessWidget {
   final VoidCallback onToggleAssign;
   final void Function(int delta)? onUpdateQuantity;
   final VoidCallback? onDelete;
+  final VoidCallback? onConfigurePortions;
 
   const MenuItemTile({
     super.key,
@@ -22,6 +23,7 @@ class MenuItemTile extends StatelessWidget {
     required this.onToggleAssign,
     this.onUpdateQuantity,
     this.onDelete,
+    this.onConfigurePortions,
   });
 
   @override
@@ -113,25 +115,32 @@ class MenuItemTile extends StatelessWidget {
                 Wrap(
                   spacing: 4,
                   runSpacing: 4,
-                  children: item.assignedTo.isEmpty
-                      ? [
-                          Text(
-                            'Belum di-assign',
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w700,
-                              color: Colors.redAccent,
-                            ),
-                          ),
-                        ]
-                      : item.assignedTo.map((friendId) {
-                          final friendObj = allFriends.firstWhere(
-                            (f) => f.id == friendId,
-                            orElse: () => Friend(id: friendId, name: friendId),
-                          );
-                          final isCurrent = friendId == activeFriendId;
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    if (item.assignedTo.isEmpty)
+                      Text(
+                        'Belum di-assign',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.redAccent,
+                        ),
+                      )
+                    else ...[
+                      ...item.assignedTo.map((friendId) {
+                        final friendObj = allFriends.firstWhere(
+                          (f) => f.id == friendId,
+                          orElse: () => Friend(id: friendId, name: friendId),
+                        );
+                        final isCurrent = friendId == activeFriendId;
+                        final portion = item.getPortionFor(friendId);
+                        final badgeText = portion > 1
+                            ? '${friendObj.name} (${portion}x)'
+                            : friendObj.name;
 
-                          return Container(
+                        return GestureDetector(
+                          onTap: onConfigurePortions,
+                          child: Container(
                             padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                             decoration: BoxDecoration(
                               color: isCurrent ? AppColors.neoLime : AppColors.neoBg,
@@ -143,15 +152,45 @@ class MenuItemTile extends StatelessWidget {
                               ),
                             ),
                             child: Text(
-                              friendObj.name,
+                              badgeText,
                               style: GoogleFonts.plusJakartaSans(
                                 fontSize: 10,
                                 fontWeight: FontWeight.w800,
                                 color: AppColors.neoDark,
                               ),
                             ),
-                          );
-                        }).toList(),
+                          ),
+                        );
+                      }),
+                      // Quick Atur Porsi chip button
+                      if (onConfigurePortions != null && (item.isShared || item.quantity > 1))
+                        GestureDetector(
+                          onTap: onConfigurePortions,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: AppColors.neoDark,
+                              borderRadius: BorderRadius.circular(999),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(Icons.tune_rounded, size: 9, color: AppColors.neoLime),
+                                const SizedBox(width: 3),
+                                Text(
+                                  'Atur Porsi',
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 9,
+                                    fontWeight: FontWeight.w800,
+                                    color: AppColors.neoLime,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                    ],
+                  ],
                 ),
               ],
             ),

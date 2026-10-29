@@ -4,8 +4,8 @@ import '../models/menu_item.dart';
 import '../models/split_breakdown.dart';
 
 /// Pure mathematical calculation engine for PatunganKilat.
-/// Incorporates proportional PB1 tax, service charges, discounts, and
-/// rounding reconciliation so that individual totals match the grand total 100%.
+/// Incorporates proportional PB1 tax, service charges, discounts,
+/// custom portion splitting per item, and rounding reconciliation.
 class SplitCalculationEngine {
   SplitCalculationEngine._();
 
@@ -35,11 +35,16 @@ class SplitCalculationEngine {
       final assignees = item.assignedTo;
       if (assignees.isEmpty) continue;
 
-      final splitPrice = item.totalPrice / assignees.length;
+      final totalPortions = item.totalPortions;
+      if (totalPortions <= 0) continue;
+
       final isShared = assignees.length > 1;
 
       for (final friendId in assignees) {
         if (friendSubtotals.containsKey(friendId)) {
+          final portion = item.getPortionFor(friendId);
+          final splitPrice = item.totalPrice * (portion / totalPortions);
+
           friendSubtotals[friendId] = (friendSubtotals[friendId] ?? 0.0) + splitPrice;
           friendItemShares[friendId]?.add(
             FriendItemShare(
@@ -47,6 +52,8 @@ class SplitCalculationEngine {
               sharePrice: splitPrice,
               isShared: isShared,
               sharedCount: assignees.length,
+              portion: portion,
+              totalPortions: totalPortions,
             ),
           );
         }

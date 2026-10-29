@@ -34,7 +34,7 @@ class ReceiptShareUtil {
       buffer.writeln('• *${person.friend.name}*: *$finalStr* ($percent%)');
       if (person.items.isNotEmpty) {
         final itemDetails = person.items
-            .map((i) => i.isShared ? '${i.itemName} (1/${i.sharedCount})' : i.itemName)
+            .map((i) => i.isShared ? '${i.itemName} (${i.shareDetailLabel})' : i.itemName)
             .join(', ');
         buffer.writeln('   _${itemDetails}_');
       }

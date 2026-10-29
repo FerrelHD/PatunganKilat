@@ -218,6 +218,36 @@ class ReceiptOcrService {
     // Clean unwanted characters
     final cleaned = line.replaceAll(RegExp(r'[\r\t]'), ' ').trim();
 
+    final startsWithPrefixQty = RegExp(r'^[0-9]+\s*(?:x|\*)\s+', caseSensitive: false);
+
+    // Pattern B: Prefix multiplier format: "2x Mie Gacoan Lv 2 24.000" or "2 x Mie Gacoan Rp 24.000"
+    final patternPrefix = RegExp(
+      r'^(?:([0-9]+)\s*(?:x|\*)\s+)?(.*?)\s+(?:rp\.?)?\s*([0-9.,]{4,})$',
+      caseSensitive: false,
+    );
+
+    if (startsWithPrefixQty.hasMatch(cleaned)) {
+      final matchPrefix = patternPrefix.firstMatch(cleaned);
+      if (matchPrefix != null) {
+        final qtyStr = matchPrefix.group(1);
+        final rawName = matchPrefix.group(2)?.trim() ?? '';
+        final priceStr = matchPrefix.group(3);
+
+        final qty = int.tryParse(qtyStr ?? '') ?? 1;
+        final rawPrice = _cleanNumber(priceStr ?? '') ?? 0;
+        final unitPrice = (qty > 1 && rawPrice > 0) ? (rawPrice / qty).round() : rawPrice;
+
+        if (_isValidItemName(rawName) && unitPrice > 0) {
+          return ExtractedReceiptItem(
+            name: _formatName(rawName),
+            quantity: qty > 0 ? qty : 1,
+            unitPrice: unitPrice,
+            emoji: detectEmoji(rawName),
+          );
+        }
+      }
+    }
+
     // Pattern A: Suffix multiplier format: "Kopi Susu @ Rp 18.000 x 2 = Rp 36.000" or "... x 2 = 36000"
     final patternSuffix = RegExp(
       r'^(.*?)(?:@\s*(?:rp\.?)?\s*([0-9.,]+))?\s*(?:x\s*|\*|\()?\s*([0-9]+)\s*(?:x|\))?\s*=?\s*(?:rp\.?)?\s*([0-9.,]+)$',
@@ -247,12 +277,6 @@ class ReceiptOcrService {
       }
     }
 
-    // Pattern B: Prefix multiplier format: "2x Mie Gacoan 24.000" or "2 x Mie Gacoan Rp 24.000"
-    final patternPrefix = RegExp(
-      r'^(?:([0-9]+)\s*(?:x|\*)\s+)?(.*?)\s+(?:rp\.?)?\s*([0-9.,]{4,})$',
-      caseSensitive: false,
-    );
-
     final matchPrefix = patternPrefix.firstMatch(cleaned);
     if (matchPrefix != null) {
       final qtyStr = matchPrefix.group(1);
@@ -262,8 +286,6 @@ class ReceiptOcrService {
       final qty = int.tryParse(qtyStr ?? '') ?? 1;
       final rawPrice = _cleanNumber(priceStr ?? '') ?? 0;
 
-      // In prefix receipts (e.g. 2x Mie Gacoan 24.000), 24.000 is typically the line total.
-      // So unit price is line total / qty.
       final unitPrice = (qty > 1 && rawPrice > 0) ? (rawPrice / qty).round() : rawPrice;
 
       if (_isValidItemName(rawName) && unitPrice > 0) {

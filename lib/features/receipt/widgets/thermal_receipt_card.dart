@@ -76,7 +76,7 @@ class ThermalReceiptCard extends ConsumerWidget {
                   final itemsStr = person.items.isEmpty
                       ? 'Belum pesan menu'
                       : person.items
-                          .map((i) => i.isShared ? '${i.itemName} (1/${i.sharedCount})' : i.itemName)
+                          .map((i) => i.isShared ? '${i.itemName} (${i.shareDetailLabel})' : i.itemName)
                           .join(', ');
 
                   return Container(

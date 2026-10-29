@@ -106,11 +106,11 @@ class BillSessionState {
     ];
 
     const items = [
-      MenuItem(id: '1', name: 'Toripaitan Ramen Spesial', price: 88000, emoji: '🍜', assignedTo: ['raka']),
-      MenuItem(id: '2', name: 'Spicy Miso Ramen', price: 82000, emoji: '🌶️', assignedTo: ['nadia']),
-      MenuItem(id: '3', name: 'Shoyu Ramen Original', price: 74000, emoji: '🍥', assignedTo: ['bima']),
-      MenuItem(id: '4', name: 'Chicken Karaage Sharing', price: 42000, emoji: '🍗', assignedTo: ['raka', 'nadia', 'bima', 'sinta']),
-      MenuItem(id: '5', name: 'Cold Ocha Refill (4 Gelas)', price: 24000, emoji: '🍵', assignedTo: ['sinta']),
+      MenuItem(id: '1', name: 'Toripaitan Ramen Spesial', price: 88000, emoji: '🍜', assignedTo: ['raka'], portions: {'raka': 1}),
+      MenuItem(id: '2', name: 'Spicy Miso Ramen', price: 82000, emoji: '🌶️', assignedTo: ['nadia'], portions: {'nadia': 1}),
+      MenuItem(id: '3', name: 'Shoyu Ramen Original', price: 74000, emoji: '🍥', assignedTo: ['bima'], portions: {'bima': 1}),
+      MenuItem(id: '4', name: 'Chicken Karaage Sharing', price: 42000, emoji: '🍗', assignedTo: ['raka', 'nadia', 'bima', 'sinta'], portions: {'raka': 1, 'nadia': 1, 'bima': 1, 'sinta': 1}),
+      MenuItem(id: '5', name: 'Cold Ocha Refill (4 Gelas)', price: 24000, emoji: '🍵', assignedTo: ['sinta'], portions: {'sinta': 1}),
     ];
 
     return const BillSessionState(
@@ -209,12 +209,76 @@ class BillSessionNotifier extends StateNotifier<BillSessionState> {
       if (item.id != itemId) return item;
 
       final assignees = List<String>.from(item.assignedTo);
+      final portions = Map<String, int>.from(item.portions);
+
       if (assignees.contains(friendId)) {
         assignees.remove(friendId);
+        portions.remove(friendId);
       } else {
         assignees.add(friendId);
+        portions[friendId] = 1;
       }
-      return item.copyWith(assignedTo: assignees);
+      return item.copyWith(assignedTo: assignees, portions: portions);
+    }).toList();
+
+    state = state.copyWith(items: updatedItems);
+    _saveToStorage();
+  }
+
+  void updateItemFriendPortion(String itemId, String friendId, int newPortion) {
+    final updatedItems = state.items.map((item) {
+      if (item.id != itemId) return item;
+
+      final assignees = List<String>.from(item.assignedTo);
+      final portions = Map<String, int>.from(item.portions);
+
+      if (newPortion <= 0) {
+        assignees.remove(friendId);
+        portions.remove(friendId);
+      } else {
+        if (!assignees.contains(friendId)) {
+          assignees.add(friendId);
+        }
+        portions[friendId] = newPortion;
+      }
+
+      return item.copyWith(assignedTo: assignees, portions: portions);
+    }).toList();
+
+    state = state.copyWith(items: updatedItems);
+    _saveToStorage();
+  }
+
+  void setItemPortions(String itemId, Map<String, int> newPortions) {
+    final updatedItems = state.items.map((item) {
+      if (item.id != itemId) return item;
+
+      final validPortions = <String, int>{};
+      final newAssignees = <String>[];
+
+      for (final entry in newPortions.entries) {
+        if (entry.value > 0) {
+          validPortions[entry.key] = entry.value;
+          newAssignees.add(entry.key);
+        }
+      }
+
+      return item.copyWith(assignedTo: newAssignees, portions: validPortions);
+    }).toList();
+
+    state = state.copyWith(items: updatedItems);
+    _saveToStorage();
+  }
+
+  void resetItemPortionsToEqual(String itemId) {
+    final updatedItems = state.items.map((item) {
+      if (item.id != itemId) return item;
+
+      final equalPortions = <String, int>{
+        for (final fId in item.assignedTo) fId: 1,
+      };
+
+      return item.copyWith(portions: equalPortions);
     }).toList();
 
     state = state.copyWith(items: updatedItems);
@@ -241,7 +305,11 @@ class BillSessionNotifier extends StateNotifier<BillSessionState> {
   void splitAllEqually() {
     final allFriendIds = state.friends.map((f) => f.id).toList();
     final updatedItems = state.items.map((item) {
-      return item.copyWith(assignedTo: List<String>.from(allFriendIds));
+      final equalPortions = <String, int>{for (final fId in allFriendIds) fId: 1};
+      return item.copyWith(
+        assignedTo: List<String>.from(allFriendIds),
+        portions: equalPortions,
+      );
     }).toList();
 
     state = state.copyWith(items: updatedItems);
@@ -258,13 +326,16 @@ class BillSessionNotifier extends StateNotifier<BillSessionState> {
         ? state.activeFriendId
         : (state.friends.isNotEmpty ? state.friends.first.id : '');
 
+    final qty = quantity < 1 ? 1 : quantity;
+
     final newItem = MenuItem(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
       name: name,
       price: price,
-      quantity: quantity < 1 ? 1 : quantity,
+      quantity: qty,
       emoji: emoji,
       assignedTo: activeId.isNotEmpty ? [activeId] : [],
+      portions: activeId.isNotEmpty ? {activeId: qty} : {},
     );
 
     state = state.copyWith(items: [newItem, ...state.items]);
@@ -275,7 +346,22 @@ class BillSessionNotifier extends StateNotifier<BillSessionState> {
     final updatedItems = state.items.map((item) {
       if (item.id != itemId) return item;
       final newQty = item.quantity + delta;
-      return newQty > 0 ? item.copyWith(quantity: newQty) : item;
+      if (newQty <= 0) return item;
+
+      // If only 1 person is assigned and their portion was equal to old quantity,
+      // update their portion to match newQty
+      Map<String, int>? updatedPortions;
+      if (item.assignedTo.length == 1) {
+        final singleFriendId = item.assignedTo.first;
+        if ((item.portions[singleFriendId] ?? item.quantity) == item.quantity) {
+          updatedPortions = {singleFriendId: newQty};
+        }
+      }
+
+      return item.copyWith(
+        quantity: newQty,
+        portions: updatedPortions ?? item.portions,
+      );
     }).toList();
 
     state = state.copyWith(items: updatedItems);

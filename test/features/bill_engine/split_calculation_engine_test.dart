@@ -99,5 +99,83 @@ void main() {
       expect(rakaBreakdown.items.first.itemName, 'Es Teh Manis (3x)');
       expect(rakaBreakdown.items.last.itemName, 'Dimsum Porsi (2x)');
     });
+
+    test('Calculates custom portions split correctly when items are split unevenly', () {
+      // 3 porsi Es Teh Manis (@ Rp 10.000 = Rp 30.000)
+      // Raka took 2 portions, Nadia took 1 portion
+      final items = [
+        const MenuItem(
+          id: '1',
+          name: 'Es Teh Manis',
+          price: 10000,
+          quantity: 3,
+          assignedTo: ['raka', 'nadia'],
+          portions: {'raka': 2, 'nadia': 1},
+        ),
+      ];
+
+      final result = SplitCalculationEngine.calculate(
+        friends: [raka, nadia],
+        items: items,
+        taxEnabled: false,
+        serviceEnabled: false,
+        discountAmount: 0,
+      );
+
+      expect(result.subtotalAll, 30000);
+      expect(result.grandTotal, 30000);
+
+      final rakaBreakdown = result.breakdowns.firstWhere((b) => b.friend.id == 'raka');
+      final nadiaBreakdown = result.breakdowns.firstWhere((b) => b.friend.id == 'nadia');
+
+      // Raka should pay 2/3 * 30.000 = 20.000
+      expect(rakaBreakdown.finalAmount, 20000);
+      expect(rakaBreakdown.items.first.sharePrice, 20000.0);
+      expect(rakaBreakdown.items.first.portion, 2);
+      expect(rakaBreakdown.items.first.totalPortions, 3);
+      expect(rakaBreakdown.items.first.shareDetailLabel, '2/3 porsi');
+
+      // Nadia should pay 1/3 * 30.000 = 10.000
+      expect(nadiaBreakdown.finalAmount, 10000);
+      expect(nadiaBreakdown.items.first.sharePrice, 10000.0);
+      expect(nadiaBreakdown.items.first.portion, 1);
+      expect(nadiaBreakdown.items.first.totalPortions, 3);
+      expect(nadiaBreakdown.items.first.shareDetailLabel, '1/3 porsi');
+    });
+
+    test('Calculates custom portions split for single item sharing ratio', () {
+      // 1 Pizza Large Rp 80.000
+      // Raka ate 3 slices, Nadia ate 1 slice (ratio 3:1)
+      final items = [
+        const MenuItem(
+          id: 'pizza',
+          name: 'Pizza Meat Lovers',
+          price: 80000,
+          quantity: 1,
+          assignedTo: ['raka', 'nadia'],
+          portions: {'raka': 3, 'nadia': 1},
+        ),
+      ];
+
+      final result = SplitCalculationEngine.calculate(
+        friends: [raka, nadia],
+        items: items,
+        taxEnabled: false,
+        serviceEnabled: false,
+        discountAmount: 0,
+      );
+
+      expect(result.grandTotal, 80000);
+
+      final rakaBreakdown = result.breakdowns.firstWhere((b) => b.friend.id == 'raka');
+      final nadiaBreakdown = result.breakdowns.firstWhere((b) => b.friend.id == 'nadia');
+
+      // Raka 3/4 * 80.000 = 60.000
+      expect(rakaBreakdown.finalAmount, 60000);
+      // Nadia 1/4 * 80.000 = 20.000
+      expect(nadiaBreakdown.finalAmount, 20000);
+      expect(rakaBreakdown.items.first.shareDetailLabel, '3/4 porsi');
+      expect(nadiaBreakdown.items.first.shareDetailLabel, '1/4 porsi');
+    });
   });
 }

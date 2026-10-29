@@ -10,6 +10,7 @@ import '../../bill_engine/providers/bill_session_provider.dart';
 import '../../home/widgets/create_session_bottom_sheet.dart';
 import '../widgets/add_menu_bottom_sheet.dart';
 import '../widgets/friend_target_card.dart';
+import '../widgets/item_portion_split_bottom_sheet.dart';
 import '../widgets/menu_item_tile.dart';
 import '../widgets/receipt_scan_bottom_sheet.dart';
 import '../widgets/tax_service_promo_bar.dart';
@@ -467,6 +468,21 @@ class SplitArenaScreen extends ConsumerWidget {
                             },
                             onUpdateQuantity: (delta) {
                               notifier.updateItemQuantity(item.id, delta);
+                            },
+                            onConfigurePortions: () {
+                              ItemPortionSplitBottomSheet.show(
+                                context,
+                                item: item,
+                                allFriends: session.friends,
+                                onSave: (updatedPortions) {
+                                  notifier.setItemPortions(item.id, updatedPortions);
+                                  NeoToast.show(
+                                    context,
+                                    'Porsi "${item.name}" berhasil diatur! ⚡',
+                                    type: NeoToastType.success,
+                                  );
+                                },
+                              );
                             },
                             onDelete: () {
                               notifier.deleteMenuItem(item.id);
