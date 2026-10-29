@@ -6,7 +6,7 @@ import '../../../core/widgets/neo_pill_button.dart';
 import '../../../core/widgets/neo_toast.dart';
 
 class AddMenuBottomSheet extends StatefulWidget {
-  final void Function(String name, int price, String emoji) onSave;
+  final void Function(String name, int price, String emoji, int quantity) onSave;
 
   const AddMenuBottomSheet({
     super.key,
@@ -15,7 +15,7 @@ class AddMenuBottomSheet extends StatefulWidget {
 
   static Future<void> show(
     BuildContext context, {
-    required void Function(String name, int price, String emoji) onSave,
+    required void Function(String name, int price, String emoji, int quantity) onSave,
   }) {
     return showModalBottomSheet(
       context: context,
@@ -33,6 +33,7 @@ class _AddMenuBottomSheetState extends State<AddMenuBottomSheet> {
   final _nameController = TextEditingController();
   final _priceController = TextEditingController();
   String _selectedEmoji = '🥟';
+  int _quantity = 1;
 
   final List<String> _emojiOptions = ['🥟', '🍜', '🍗', '🍵', '🍨', '🍕', '🍔', '☕'];
 
@@ -56,7 +57,7 @@ class _AddMenuBottomSheetState extends State<AddMenuBottomSheet> {
       return;
     }
 
-    widget.onSave(name, price, _selectedEmoji);
+    widget.onSave(name, price, _selectedEmoji, _quantity);
     Navigator.of(context).pop();
   }
 
@@ -133,7 +134,7 @@ class _AddMenuBottomSheetState extends State<AddMenuBottomSheet> {
           const SizedBox(height: 14),
 
           // Price Field
-          Text('Harga Total (Rp)', style: AppTypography.captionBold),
+          Text('Harga Satuan (Rp)', style: AppTypography.captionBold),
           const SizedBox(height: 6),
           TextField(
             controller: _priceController,
@@ -158,6 +159,66 @@ class _AddMenuBottomSheetState extends State<AddMenuBottomSheet> {
                 borderSide: BorderSide.none,
               ),
             ),
+          ),
+          const SizedBox(height: 14),
+
+          // Quantity Stepper (Berapa kali pesan)
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Jumlah Pesanan (Porsi)', style: AppTypography.captionBold),
+                  Text('Berapa kali menu ini dipesan', style: AppTypography.bodyMuted.copyWith(fontSize: 11)),
+                ],
+              ),
+              Container(
+                decoration: BoxDecoration(
+                  color: AppColors.neoBg,
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Row(
+                  children: [
+                    InkWell(
+                      onTap: () {
+                        if (_quantity > 1) {
+                          setState(() => _quantity--);
+                        }
+                      },
+                      borderRadius: BorderRadius.circular(999),
+                      child: Container(
+                        width: 36,
+                        height: 36,
+                        alignment: Alignment.center,
+                        child: const Icon(Icons.remove_rounded, size: 16, color: AppColors.neoDark),
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                      child: Text(
+                        '$_quantity',
+                        style: GoogleFonts.jetBrainsMono(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w900,
+                          color: AppColors.neoDark,
+                        ),
+                      ),
+                    ),
+                    InkWell(
+                      onTap: () => setState(() => _quantity++),
+                      borderRadius: BorderRadius.circular(999),
+                      child: Container(
+                        width: 36,
+                        height: 36,
+                        alignment: Alignment.center,
+                        child: const Icon(Icons.add_rounded, size: 16, color: AppColors.neoDark),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 14),
 

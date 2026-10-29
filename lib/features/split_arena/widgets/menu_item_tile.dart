@@ -11,6 +11,8 @@ class MenuItemTile extends StatelessWidget {
   final String activeFriendId;
   final List<Friend> allFriends;
   final VoidCallback onToggleAssign;
+  final void Function(int delta)? onUpdateQuantity;
+  final VoidCallback? onDelete;
 
   const MenuItemTile({
     super.key,
@@ -18,6 +20,8 @@ class MenuItemTile extends StatelessWidget {
     required this.activeFriendId,
     required this.allFriends,
     required this.onToggleAssign,
+    this.onUpdateQuantity,
+    this.onDelete,
   });
 
   @override
@@ -61,19 +65,49 @@ class MenuItemTile extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  item.name,
-                  style: AppTypography.menuName,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        item.name,
+                        style: AppTypography.menuName,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    if (onDelete != null)
+                      GestureDetector(
+                        behavior: HitTestBehavior.opaque,
+                        onTap: onDelete,
+                        child: const Padding(
+                          padding: EdgeInsets.only(left: 4),
+                          child: Icon(Icons.close_rounded, size: 14, color: AppColors.neoMuted),
+                        ),
+                      ),
+                  ],
                 ),
                 const SizedBox(height: 2),
-                Text(
-                  CurrencyFormatter.formatRp(item.price),
-                  style: AppTypography.monoPrice.copyWith(
-                    color: AppColors.neoMuted,
-                    fontSize: 11,
-                  ),
+                Row(
+                  children: [
+                    Text(
+                      CurrencyFormatter.formatRp(item.totalPrice),
+                      style: AppTypography.monoPrice.copyWith(
+                        color: AppColors.neoDark,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 12,
+                      ),
+                    ),
+                    if (item.quantity > 1) ...[
+                      const SizedBox(width: 4),
+                      Text(
+                        '(${CurrencyFormatter.formatShortRp(item.price)} × ${item.quantity})',
+                        style: AppTypography.monoPrice.copyWith(
+                          color: AppColors.neoMuted,
+                          fontSize: 10,
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
                 const SizedBox(height: 6),
                 Wrap(
@@ -118,6 +152,66 @@ class MenuItemTile extends StatelessWidget {
                             ),
                           );
                         }).toList(),
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(width: 8),
+
+          // Stepper for Quantity (Berapa kali pesannya)
+          Container(
+            decoration: BoxDecoration(
+              color: AppColors.neoBg,
+              borderRadius: BorderRadius.circular(999),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: () {
+                    if (item.quantity > 1) {
+                      onUpdateQuantity?.call(-1);
+                    } else if (onDelete != null) {
+                      onDelete?.call();
+                    }
+                  },
+                  child: Container(
+                    width: 24,
+                    height: 24,
+                    alignment: Alignment.center,
+                    child: Icon(
+                      item.quantity > 1 ? Icons.remove_rounded : Icons.delete_outline_rounded,
+                      size: 13,
+                      color: item.quantity > 1 ? AppColors.neoDark : Colors.redAccent,
+                    ),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  child: Text(
+                    '${item.quantity}',
+                    style: GoogleFonts.jetBrainsMono(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w900,
+                      color: AppColors.neoDark,
+                    ),
+                  ),
+                ),
+                GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: () => onUpdateQuantity?.call(1),
+                  child: Container(
+                    width: 24,
+                    height: 24,
+                    alignment: Alignment.center,
+                    child: const Icon(
+                      Icons.add_rounded,
+                      size: 13,
+                      color: AppColors.neoDark,
+                    ),
+                  ),
                 ),
               ],
             ),
