@@ -232,10 +232,10 @@ class ReceiptOcrService {
       final totalStr = matchSuffix.group(4);
 
       final qty = int.tryParse(qtyStr ?? '') ?? 1;
-      final total = _cleanNumber(totalStr ?? '');
-      final unit = (unitPriceStr != null && unitPriceStr.isNotEmpty)
-          ? _cleanNumber(unitPriceStr)
-          : (qty > 0 && total != null ? (total / qty).round() : total ?? 0);
+      final total = _cleanNumber(totalStr ?? '') ?? 0;
+      final int unit = (unitPriceStr != null && unitPriceStr.isNotEmpty)
+          ? (_cleanNumber(unitPriceStr) ?? 0)
+          : (qty > 0 && total > 0 ? (total / qty).round() : total);
 
       if (_isValidItemName(rawName) && unit > 0) {
         return ExtractedReceiptItem(
