@@ -11,6 +11,7 @@ import '../../home/widgets/create_session_bottom_sheet.dart';
 import '../widgets/add_menu_bottom_sheet.dart';
 import '../widgets/friend_target_card.dart';
 import '../widgets/menu_item_tile.dart';
+import '../widgets/receipt_scan_bottom_sheet.dart';
 import '../widgets/tax_service_promo_bar.dart';
 
 class SplitArenaScreen extends ConsumerWidget {
@@ -174,37 +175,62 @@ class SplitArenaScreen extends ConsumerWidget {
                       ),
                     ],
                   ),
-                  InkWell(
-                    onTap: () {
-                      AddMenuBottomSheet.show(
-                        context,
-                        onSave: (name, price, emoji) {
-                          notifier.addNewMenuItem(name, price, emoji);
-                          NeoToast.show(
-                            context,
-                            '"$name" ditambahkan ke tagihan! ⚡',
-                            type: NeoToastType.success,
-                          );
-                        },
-                      );
-                    },
-                    borderRadius: BorderRadius.circular(999),
-                    child: Container(
-                      width: 40,
-                      height: 40,
-                      decoration: const BoxDecoration(
-                        color: AppColors.neoDark,
-                        shape: BoxShape.circle,
-                        boxShadow: AppColors.softShadow,
-                      ),
-                      child: const Center(
-                        child: Icon(
-                          Icons.add_rounded,
-                          size: 20,
-                          color: AppColors.neoLime,
+                  Row(
+                    children: [
+                      InkWell(
+                        onTap: () => ReceiptScanBottomSheet.show(context),
+                        borderRadius: BorderRadius.circular(999),
+                        child: Container(
+                          width: 40,
+                          height: 40,
+                          decoration: const BoxDecoration(
+                            color: Colors.white,
+                            shape: BoxShape.circle,
+                            boxShadow: AppColors.softShadow,
+                          ),
+                          child: const Center(
+                            child: Icon(
+                              Icons.document_scanner_rounded,
+                              size: 18,
+                              color: AppColors.neoDark,
+                            ),
+                          ),
                         ),
                       ),
-                    ),
+                      const SizedBox(width: 8),
+                      InkWell(
+                        onTap: () {
+                          AddMenuBottomSheet.show(
+                            context,
+                            onSave: (name, price, emoji, quantity) {
+                              notifier.addNewMenuItem(name, price, emoji, quantity: quantity);
+                              NeoToast.show(
+                                context,
+                                '"$name" ($quantity porsi) ditambahkan! ⚡',
+                                type: NeoToastType.success,
+                              );
+                            },
+                          );
+                        },
+                        borderRadius: BorderRadius.circular(999),
+                        child: Container(
+                          width: 40,
+                          height: 40,
+                          decoration: const BoxDecoration(
+                            color: AppColors.neoDark,
+                            shape: BoxShape.circle,
+                            boxShadow: AppColors.softShadow,
+                          ),
+                          child: const Center(
+                            child: Icon(
+                              Icons.add_rounded,
+                              size: 20,
+                              color: AppColors.neoLime,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -351,43 +377,75 @@ class SplitArenaScreen extends ConsumerWidget {
                               style: AppTypography.bodyMuted.copyWith(fontSize: 11, height: 1.4),
                             ),
                             const SizedBox(height: 16),
-                            Material(
-                              color: AppColors.neoDark,
-                              borderRadius: BorderRadius.circular(999),
-                              child: InkWell(
-                                onTap: () {
-                                  AddMenuBottomSheet.show(
-                                    context,
-                                    onSave: (name, price, emoji) {
-                                      notifier.addNewMenuItem(name, price, emoji);
-                                      NeoToast.show(
-                                        context,
-                                        '"$name" ditambahkan ke tagihan! ⚡',
-                                        type: NeoToastType.success,
-                                      );
-                                    },
-                                  );
-                                },
-                                borderRadius: BorderRadius.circular(999),
-                                child: Padding(
-                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      const Icon(Icons.add_rounded, size: 16, color: AppColors.neoLime),
-                                      const SizedBox(width: 6),
-                                      Text(
-                                        'Tambah Menu Pertama',
-                                        style: GoogleFonts.plusJakartaSans(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w700,
-                                          color: AppColors.neoLime,
-                                        ),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Material(
+                                  color: AppColors.neoLime,
+                                  borderRadius: BorderRadius.circular(999),
+                                  child: InkWell(
+                                    onTap: () => ReceiptScanBottomSheet.show(context),
+                                    borderRadius: BorderRadius.circular(999),
+                                    child: Padding(
+                                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          const Icon(Icons.document_scanner_rounded, size: 15, color: AppColors.neoDark),
+                                          const SizedBox(width: 6),
+                                          Text(
+                                            'Scan Struk',
+                                            style: GoogleFonts.plusJakartaSans(
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.w800,
+                                              color: AppColors.neoDark,
+                                            ),
+                                          ),
+                                        ],
                                       ),
-                                    ],
+                                    ),
                                   ),
                                 ),
-                              ),
+                                const SizedBox(width: 8),
+                                Material(
+                                  color: AppColors.neoDark,
+                                  borderRadius: BorderRadius.circular(999),
+                                  child: InkWell(
+                                    onTap: () {
+                                      AddMenuBottomSheet.show(
+                                        context,
+                                        onSave: (name, price, emoji, quantity) {
+                                          notifier.addNewMenuItem(name, price, emoji, quantity: quantity);
+                                          NeoToast.show(
+                                            context,
+                                            '"$name" ($quantity porsi) ditambahkan! ⚡',
+                                            type: NeoToastType.success,
+                                          );
+                                        },
+                                      );
+                                    },
+                                    borderRadius: BorderRadius.circular(999),
+                                    child: Padding(
+                                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          const Icon(Icons.add_rounded, size: 15, color: AppColors.neoLime),
+                                          const SizedBox(width: 6),
+                                          Text(
+                                            'Input Manual',
+                                            style: GoogleFonts.plusJakartaSans(
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.w700,
+                                              color: AppColors.neoLime,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
                           ],
                         ),
@@ -406,6 +464,17 @@ class SplitArenaScreen extends ConsumerWidget {
                             allFriends: session.friends,
                             onToggleAssign: () {
                               notifier.toggleItemAssignment(item.id, session.activeFriendId);
+                            },
+                            onUpdateQuantity: (delta) {
+                              notifier.updateItemQuantity(item.id, delta);
+                            },
+                            onDelete: () {
+                              notifier.deleteMenuItem(item.id);
+                              NeoToast.show(
+                                context,
+                                '"${item.name}" dihapus dari tagihan',
+                                type: NeoToastType.info,
+                              );
                             },
                           );
                         },
