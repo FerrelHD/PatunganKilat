@@ -354,7 +354,7 @@ class _ItemPortionSplitBottomSheetState extends State<ItemPortionSplitBottomShee
                             ),
                             if (isAssigned && totalPortions > 0)
                               Text(
-                                '${CurrencyFormatter.formatRp(friendCost)} (${portion}/$totalPortions porsi)',
+                                '${CurrencyFormatter.formatRp(friendCost)} (/$totalPortions porsi)',
                                 style: GoogleFonts.jetBrainsMono(
                                   fontSize: 11,
                                   fontWeight: FontWeight.w700,

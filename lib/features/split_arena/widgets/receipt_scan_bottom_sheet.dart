@@ -38,7 +38,7 @@ class _ReceiptScanBottomSheetState extends ConsumerState<ReceiptScanBottomSheet>
   List<ExtractedReceiptItem> _parsedItems = [];
   int? _detectedTax;
   int? _detectedService;
-  int? _detectedDiscount;
+
 
   @override
   void dispose() {
@@ -78,7 +78,7 @@ class _ReceiptScanBottomSheetState extends ConsumerState<ReceiptScanBottomSheet>
         _parsedItems = result.items;
         _detectedTax = result.taxAmount;
         _detectedService = result.serviceAmount;
-        _detectedDiscount = result.discountAmount;
+
         _isLoading = false;
       });
     } catch (e) {
@@ -115,7 +115,7 @@ class _ReceiptScanBottomSheetState extends ConsumerState<ReceiptScanBottomSheet>
       _parsedItems = result.items;
       _detectedTax = result.taxAmount;
       _detectedService = result.serviceAmount;
-      _detectedDiscount = result.discountAmount;
+
       _isPasteMode = false;
     });
 

@@ -159,7 +159,7 @@ class ReceiptOcrService {
       caseSensitive: false,
     );
 
-    for (var rawLine in lines) {
+    for (final rawLine in lines) {
       final line = rawLine.trim();
       if (line.isEmpty) continue;
 
