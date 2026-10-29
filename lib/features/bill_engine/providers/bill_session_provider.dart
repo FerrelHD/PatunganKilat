@@ -253,7 +253,7 @@ class BillSessionNotifier extends StateNotifier<BillSessionState> {
     _saveToStorage();
   }
 
-  void addNewMenuItem(String name, int price, String emoji) {
+  void addNewMenuItem(String name, int price, String emoji, {int quantity = 1}) {
     final activeId = state.activeFriendId.isNotEmpty
         ? state.activeFriendId
         : (state.friends.isNotEmpty ? state.friends.first.id : '');
@@ -262,11 +262,34 @@ class BillSessionNotifier extends StateNotifier<BillSessionState> {
       id: DateTime.now().millisecondsSinceEpoch.toString(),
       name: name,
       price: price,
+      quantity: quantity < 1 ? 1 : quantity,
       emoji: emoji,
       assignedTo: activeId.isNotEmpty ? [activeId] : [],
     );
 
     state = state.copyWith(items: [newItem, ...state.items]);
+    _saveToStorage();
+  }
+
+  void updateItemQuantity(String itemId, int delta) {
+    final updatedItems = state.items.map((item) {
+      if (item.id != itemId) return item;
+      final newQty = item.quantity + delta;
+      return newQty > 0 ? item.copyWith(quantity: newQty) : item;
+    }).toList();
+
+    state = state.copyWith(items: updatedItems);
+    _saveToStorage();
+  }
+
+  void deleteMenuItem(String itemId) {
+    final updatedItems = state.items.where((item) => item.id != itemId).toList();
+    state = state.copyWith(items: updatedItems);
+    _saveToStorage();
+  }
+
+  void batchAddItems(List<MenuItem> newItems) {
+    state = state.copyWith(items: [...newItems, ...state.items]);
     _saveToStorage();
   }
 

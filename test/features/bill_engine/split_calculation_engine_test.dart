@@ -70,5 +70,34 @@ void main() {
       final alice = result.breakdowns.firstWhere((b) => b.friend.id == 'f1');
       expect(alice.finalAmount, 33334);
     });
+
+    test('Correctly calculates subtotal and item shares when items have quantity > 1', () {
+      final items = [
+        const MenuItem(id: '1', name: 'Es Teh Manis', price: 5000, quantity: 3, assignedTo: ['raka']),
+        const MenuItem(id: '2', name: 'Dimsum Porsi', price: 20000, quantity: 2, assignedTo: ['raka', 'nadia']),
+      ];
+
+      final result = SplitCalculationEngine.calculate(
+        friends: [raka, nadia],
+        items: items,
+        taxEnabled: false,
+        serviceEnabled: false,
+        discountAmount: 0,
+      );
+
+      // Es Teh Manis: 5.000 x 3 = 15.000 (Raka)
+      // Dimsum: 20.000 x 2 = 40.000 (Raka: 20.000, Nadia: 20.000)
+      // Subtotal: 55.000
+      expect(result.subtotalAll, 55000);
+      expect(result.grandTotal, 55000);
+
+      final rakaBreakdown = result.breakdowns.firstWhere((b) => b.friend.id == 'raka');
+      final nadiaBreakdown = result.breakdowns.firstWhere((b) => b.friend.id == 'nadia');
+
+      expect(rakaBreakdown.finalAmount, 35000);
+      expect(nadiaBreakdown.finalAmount, 20000);
+      expect(rakaBreakdown.items.first.itemName, 'Es Teh Manis (3x)');
+      expect(rakaBreakdown.items.last.itemName, 'Dimsum Porsi (2x)');
+    });
   });
 }

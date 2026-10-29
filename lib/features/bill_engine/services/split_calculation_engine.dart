@@ -18,7 +18,7 @@ class SplitCalculationEngine {
     double taxPercent = 0.10,
     double servicePercent = 0.05,
   }) {
-    final subtotalAll = items.fold<int>(0, (sum, item) => sum + item.price);
+    final subtotalAll = items.fold<int>(0, (sum, item) => sum + item.totalPrice);
     final appliedTaxRate = taxEnabled ? taxPercent : 0.0;
     final appliedServiceRate = serviceEnabled ? servicePercent : 0.0;
     final totalTaxRate = appliedTaxRate + appliedServiceRate;
@@ -35,7 +35,7 @@ class SplitCalculationEngine {
       final assignees = item.assignedTo;
       if (assignees.isEmpty) continue;
 
-      final splitPrice = item.price / assignees.length;
+      final splitPrice = item.totalPrice / assignees.length;
       final isShared = assignees.length > 1;
 
       for (final friendId in assignees) {
@@ -43,7 +43,7 @@ class SplitCalculationEngine {
           friendSubtotals[friendId] = (friendSubtotals[friendId] ?? 0.0) + splitPrice;
           friendItemShares[friendId]?.add(
             FriendItemShare(
-              itemName: item.name,
+              itemName: item.quantity > 1 ? '${item.name} (${item.quantity}x)' : item.name,
               sharePrice: splitPrice,
               isShared: isShared,
               sharedCount: assignees.length,
