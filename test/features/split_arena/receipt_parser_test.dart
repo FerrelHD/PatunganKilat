@@ -69,5 +69,83 @@ Total Rp 73.000
       expect(result.items[2].quantity, 1);
       expect(result.items[2].unitPrice, 15000);
     });
+
+    test('Parses multi-line Indonesian thermal receipts (item name on line 1, qty/price on line 2)', () {
+      const multiLineReceipt = '''
+SOLARIA RESTO
+KASIR: 02 - MEJA 14
+-------------------------------
+Nasi Goreng Spesial
+1 x 38.000           38.000
+Ayam Mentega
+2 x 42.000           84.000
+Es Teh Manis
+3 x 8.000            24.000
+-------------------------------
+Subtotal            146.000
+PB1 10%              14.600
+Total Bayar         160.600
+''';
+
+      final result = ReceiptOcrService.parseReceiptText(multiLineReceipt);
+
+      expect(result.items.length, 3);
+
+      expect(result.items[0].name, 'Nasi Goreng Spesial');
+      expect(result.items[0].quantity, 1);
+      expect(result.items[0].unitPrice, 38000);
+
+      expect(result.items[1].name, 'Ayam Mentega');
+      expect(result.items[1].quantity, 2);
+      expect(result.items[1].unitPrice, 42000);
+      expect(result.items[1].totalPrice, 84000);
+
+      expect(result.items[2].name, 'Es Teh Manis');
+      expect(result.items[2].quantity, 3);
+      expect(result.items[2].unitPrice, 8000);
+      expect(result.items[2].totalPrice, 24000);
+
+      expect(result.subtotal, 146000);
+      expect(result.taxAmount, 14600);
+      expect(result.grandTotal, 160600);
+    });
+
+    test('Handles decimal cents (,00 or .00) accurately without price inflation', () {
+      const receiptWithCents = '''
+CAFE KOPI SENJA
+2x Americano 40.000,00
+1x Croissant 25.000,00
+Subtotal 65.000,00
+''';
+
+      final result = ReceiptOcrService.parseReceiptText(receiptWithCents);
+
+      expect(result.items.length, 2);
+      expect(result.items[0].name, 'Americano');
+      expect(result.items[0].quantity, 2);
+      expect(result.items[0].unitPrice, 20000);
+      expect(result.items[0].totalPrice, 40000);
+
+      expect(result.items[1].name, 'Croissant');
+      expect(result.items[1].quantity, 1);
+      expect(result.items[1].unitPrice, 25000);
+    });
+
+    test('Parses middle multiplier format cleanly', () {
+      const receipt = '''
+Es Teh Manis 3 x 5.000 15.000
+Nasi Liwet 2 x 20.000 40.000
+''';
+
+      final result = ReceiptOcrService.parseReceiptText(receipt);
+      expect(result.items.length, 2);
+      expect(result.items[0].name, 'Es Teh Manis');
+      expect(result.items[0].quantity, 3);
+      expect(result.items[0].unitPrice, 5000);
+
+      expect(result.items[1].name, 'Nasi Liwet');
+      expect(result.items[1].quantity, 2);
+      expect(result.items[1].unitPrice, 20000);
+    });
   });
 }

@@ -1,4 +1,3 @@
-import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../core/theme/app_colors.dart';
@@ -52,11 +51,26 @@ class _ItemPortionSplitBottomSheetState extends State<ItemPortionSplitBottomShee
     for (final friendId in widget.item.assignedTo) {
       _portions[friendId] = widget.item.getPortionFor(friendId);
     }
-    // If empty but there are friends, keep empty or let user pick
   }
 
   int get _totalAssignedPortions {
     return _portions.values.fold<int>(0, (sum, val) => sum + val);
+  }
+
+  bool get _isAllEqualPortions {
+    if (_portions.isEmpty) return false;
+    final first = _portions.values.first;
+    return _portions.values.every((val) => val == first);
+  }
+
+  void _toggleFriend(String friendId) {
+    setState(() {
+      if (_portions.containsKey(friendId)) {
+        _portions.remove(friendId);
+      } else {
+        _portions[friendId] = 1;
+      }
+    });
   }
 
   void _incrementPortion(String friendId) {
@@ -85,20 +99,14 @@ class _ItemPortionSplitBottomSheetState extends State<ItemPortionSplitBottomShee
     });
   }
 
-  void _distributeByQuantity() {
-    final friendIds = _portions.keys.toList();
-    if (friendIds.isEmpty) return;
-
-    final totalQty = widget.item.quantity;
-    final basePortion = totalQty ~/ friendIds.length;
-    var remainder = totalQty % friendIds.length;
-
+  void _toggleSelectAll() {
     setState(() {
-      for (var i = 0; i < friendIds.length; i++) {
-        final fId = friendIds[i];
-        final extra = (remainder > 0) ? 1 : 0;
-        if (remainder > 0) remainder--;
-        _portions[fId] = max(1, basePortion + extra);
+      if (_portions.length == widget.allFriends.length) {
+        _portions.clear();
+      } else {
+        for (final friend in widget.allFriends) {
+          _portions[friend.id] = _portions[friend.id] ?? 1;
+        }
       }
     });
   }
@@ -112,13 +120,14 @@ class _ItemPortionSplitBottomSheetState extends State<ItemPortionSplitBottomShee
   Widget build(BuildContext context) {
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
     final totalPortions = _totalAssignedPortions;
-    final isExactMatch = totalPortions == widget.item.quantity;
+    final participantCount = _portions.length;
+    final isExactQtyMatch = totalPortions == widget.item.quantity;
 
     return Container(
       constraints: BoxConstraints(
-        maxHeight: MediaQuery.of(context).size.height * 0.85,
+        maxHeight: MediaQuery.of(context).size.height * 0.88,
       ),
-      padding: EdgeInsets.fromLTRB(20, 20, 20, bottomInset + 24),
+      padding: EdgeInsets.fromLTRB(20, 20, 20, bottomInset + 20),
       decoration: const BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
@@ -136,6 +145,7 @@ class _ItemPortionSplitBottomSheetState extends State<ItemPortionSplitBottomShee
                 decoration: BoxDecoration(
                   color: AppColors.neoLime,
                   borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: AppColors.neoDark, width: 1.2),
                 ),
                 child: Center(
                   child: Text(
@@ -189,53 +199,115 @@ class _ItemPortionSplitBottomSheetState extends State<ItemPortionSplitBottomShee
             ],
           ),
 
-          const SizedBox(height: 16),
+          const SizedBox(height: 14),
 
-          // Portion Status Bar
+          // Real-time Summary Card (Clean & Friction-free)
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
             decoration: BoxDecoration(
-              color: isExactMatch ? AppColors.neoLime.withValues(alpha: 0.3) : AppColors.neoBg,
+              color: participantCount > 0 ? AppColors.neoBg : Colors.grey.shade100,
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                color: isExactMatch ? AppColors.neoDark : Colors.transparent,
-                width: 1.2,
+                color: participantCount > 0
+                    ? AppColors.neoDark.withValues(alpha: 0.15)
+                    : Colors.transparent,
               ),
             ),
             child: Row(
               children: [
                 Icon(
-                  isExactMatch ? Icons.check_circle_rounded : Icons.info_outline_rounded,
-                  size: 16,
-                  color: AppColors.neoDark,
+                  participantCount == 0
+                      ? Icons.group_off_rounded
+                      : (_isAllEqualPortions
+                          ? Icons.balance_rounded
+                          : Icons.pie_chart_outline_rounded),
+                  size: 18,
+                  color: participantCount > 0 ? AppColors.neoDark : AppColors.neoMuted,
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    isExactMatch
-                        ? 'Total $totalPortions porsi terbagi (Pas dengan pesanan)'
-                        : '$totalPortions porsi terbagi dari ${widget.item.quantity} pesanan',
+                    participantCount == 0
+                        ? 'Pilih teman yang ikut patungan menu ini'
+                        : (_isAllEqualPortions
+                            ? 'Bagi rata ke $participantCount orang — ${CurrencyFormatter.formatRp((widget.item.totalPrice / participantCount).round())}/orang'
+                            : 'Total $totalPortions porsi terbagi — dihitung proporsional'),
                     style: GoogleFonts.plusJakartaSans(
-                      fontSize: 11,
+                      fontSize: 12,
                       fontWeight: FontWeight.w800,
-                      color: AppColors.neoDark,
+                      color: participantCount > 0 ? AppColors.neoDark : AppColors.neoMuted,
                     ),
                   ),
                 ),
+                if (isExactQtyMatch && participantCount > 0)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: AppColors.neoLime,
+                      borderRadius: BorderRadius.circular(999),
+                      border: Border.all(color: AppColors.neoDark, width: 1),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.check_rounded, size: 11, color: AppColors.neoDark),
+                        const SizedBox(width: 2),
+                        Text(
+                          'Pas Qty',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w900,
+                            color: AppColors.neoDark,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
               ],
             ),
           ),
 
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
 
-          // Quick Action Presets
+          // Quick Action Presets (Bagi Rata 1:1, Pilih Semua)
           Row(
             children: [
               InkWell(
-                onTap: _resetEqualPortions,
+                onTap: _portions.isNotEmpty ? _resetEqualPortions : null,
                 borderRadius: BorderRadius.circular(999),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: _portions.isNotEmpty ? AppColors.neoBg : Colors.grey.shade100,
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.balance_rounded,
+                        size: 12,
+                        color: _portions.isNotEmpty ? AppColors.neoDark : Colors.grey.shade400,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        'Bagi Rata (1:1)',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w800,
+                          color: _portions.isNotEmpty ? AppColors.neoDark : Colors.grey.shade400,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              InkWell(
+                onTap: _toggleSelectAll,
+                borderRadius: BorderRadius.circular(999),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                   decoration: BoxDecoration(
                     color: AppColors.neoBg,
                     borderRadius: BorderRadius.circular(999),
@@ -243,10 +315,16 @@ class _ItemPortionSplitBottomSheetState extends State<ItemPortionSplitBottomShee
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.balance_rounded, size: 12, color: AppColors.neoDark),
+                      Icon(
+                        _portions.length == widget.allFriends.length
+                            ? Icons.deselect_rounded
+                            : Icons.select_all_rounded,
+                        size: 12,
+                        color: AppColors.neoDark,
+                      ),
                       const SizedBox(width: 4),
                       Text(
-                        'Bagi Rata (1:1)',
+                        _portions.length == widget.allFriends.length ? 'Hapus Semua' : 'Pilih Semua',
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 10,
                           fontWeight: FontWeight.w800,
@@ -257,43 +335,14 @@ class _ItemPortionSplitBottomSheetState extends State<ItemPortionSplitBottomShee
                   ),
                 ),
               ),
-              if (widget.item.quantity > 1) ...[
-                const SizedBox(width: 8),
-                InkWell(
-                  onTap: _distributeByQuantity,
-                  borderRadius: BorderRadius.circular(999),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: AppColors.neoBg,
-                      borderRadius: BorderRadius.circular(999),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(Icons.auto_fix_high_rounded, size: 12, color: AppColors.neoDark),
-                        const SizedBox(width: 4),
-                        Text(
-                          'Bagi Sesuai Qty (${widget.item.quantity}x)',
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w800,
-                            color: AppColors.neoDark,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
             ],
           ),
 
-          const SizedBox(height: 14),
-          Text('Porsi Teman yang Ikut:', style: AppTypography.captionBold),
+          const SizedBox(height: 12),
+          Text('Daftar Teman:', style: AppTypography.captionBold),
           const SizedBox(height: 8),
 
-          // Friends List with Stepper
+          // Friends List with Tap-to-toggle & Inline Stepper
           Flexible(
             child: ListView.separated(
               shrinkWrap: true,
@@ -303,164 +352,203 @@ class _ItemPortionSplitBottomSheetState extends State<ItemPortionSplitBottomShee
                 final friend = widget.allFriends[index];
                 final isAssigned = _portions.containsKey(friend.id);
                 final portion = _portions[friend.id] ?? 0;
-                final friendCost = totalPortions > 0
+                final friendCost = totalPortions > 0 && isAssigned
                     ? (widget.item.totalPrice * (portion / totalPortions)).round()
                     : 0;
 
-                return Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: isAssigned ? Colors.white : AppColors.neoBg.withValues(alpha: 0.5),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: isAssigned ? AppColors.neoDark.withValues(alpha: 0.15) : Colors.transparent,
+                return InkWell(
+                  onTap: () {
+                    // Tap row toggles participation
+                    if (!isAssigned) {
+                      _incrementPortion(friend.id);
+                    }
+                  },
+                  borderRadius: BorderRadius.circular(16),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: isAssigned ? Colors.white : AppColors.neoBg.withValues(alpha: 0.6),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: isAssigned ? AppColors.neoDark : Colors.transparent,
+                        width: isAssigned ? 1.4 : 1.0,
+                      ),
                     ),
-                  ),
-                  child: Row(
-                    children: [
-                      // Avatar
-                      Container(
-                        width: 32,
-                        height: 32,
-                        decoration: BoxDecoration(
-                          color: isAssigned ? AppColors.neoLime : AppColors.neoBg,
-                          shape: BoxShape.circle,
-                        ),
-                        child: Center(
-                          child: Text(
-                            friend.avatarInitial,
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w900,
-                              color: AppColors.neoDark,
+                    child: Row(
+                      children: [
+                        // Checkbox indicator
+                        GestureDetector(
+                          behavior: HitTestBehavior.opaque,
+                          onTap: () => _toggleFriend(friend.id),
+                          child: Container(
+                            width: 24,
+                            height: 24,
+                            margin: const EdgeInsets.only(right: 10),
+                            decoration: BoxDecoration(
+                              color: isAssigned ? AppColors.neoDark : Colors.white,
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: isAssigned ? AppColors.neoDark : Colors.grey.shade400,
+                                width: 1.5,
+                              ),
                             ),
+                            child: isAssigned
+                                ? const Center(
+                                    child: Icon(Icons.check_rounded, size: 14, color: AppColors.neoLime),
+                                  )
+                                : null,
                           ),
                         ),
-                      ),
-                      const SizedBox(width: 10),
 
-                      // Friend Name & Cost
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              friend.name,
+                        // Avatar
+                        Container(
+                          width: 32,
+                          height: 32,
+                          decoration: BoxDecoration(
+                            color: isAssigned ? AppColors.neoLime : Colors.white,
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: isAssigned ? AppColors.neoDark : Colors.grey.shade300,
+                              width: 1,
+                            ),
+                          ),
+                          child: Center(
+                            child: Text(
+                              friend.avatarInitial,
                               style: GoogleFonts.plusJakartaSans(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w800,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w900,
                                 color: AppColors.neoDark,
                               ),
                             ),
-                            if (isAssigned && totalPortions > 0)
-                              Text(
-                                '${CurrencyFormatter.formatRp(friendCost)} (/$totalPortions porsi)',
-                                style: GoogleFonts.jetBrainsMono(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w700,
-                                  color: AppColors.neoMuted,
-                                ),
-                              )
-                            else
-                              Text(
-                                'Tidak ikut menu ini',
-                                style: GoogleFonts.plusJakartaSans(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppColors.neoMuted,
-                                ),
-                              ),
-                          ],
-                        ),
-                      ),
-
-                      // Stepper / Add button
-                      if (isAssigned)
-                        Container(
-                          decoration: BoxDecoration(
-                            color: AppColors.neoBg,
-                            borderRadius: BorderRadius.circular(999),
                           ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
+                        ),
+                        const SizedBox(width: 10),
+
+                        // Friend Name & Cost
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              GestureDetector(
-                                behavior: HitTestBehavior.opaque,
-                                onTap: () => _decrementPortion(friend.id),
-                                child: Container(
-                                  width: 28,
-                                  height: 28,
-                                  alignment: Alignment.center,
-                                  child: Icon(
-                                    portion > 1 ? Icons.remove_rounded : Icons.delete_outline_rounded,
-                                    size: 14,
-                                    color: portion > 1 ? AppColors.neoDark : Colors.redAccent,
-                                  ),
+                              Text(
+                                friend.name,
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w800,
+                                  color: isAssigned ? AppColors.neoDark : Colors.grey.shade600,
                                 ),
                               ),
-                              Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 6),
-                                child: Text(
-                                  '$portion',
+                              if (isAssigned && totalPortions > 0)
+                                Text(
+                                  CurrencyFormatter.formatRp(friendCost),
                                   style: GoogleFonts.jetBrainsMono(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w900,
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w800,
                                     color: AppColors.neoDark,
                                   ),
-                                ),
-                              ),
-                              GestureDetector(
-                                behavior: HitTestBehavior.opaque,
-                                onTap: () => _incrementPortion(friend.id),
-                                child: Container(
-                                  width: 28,
-                                  height: 28,
-                                  alignment: Alignment.center,
-                                  child: const Icon(
-                                    Icons.add_rounded,
-                                    size: 14,
-                                    color: AppColors.neoDark,
+                                )
+                              else
+                                Text(
+                                  'Tap untuk ikut',
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.neoMuted,
                                   ),
                                 ),
-                              ),
                             ],
                           ),
-                        )
-                      else
-                        InkWell(
-                          onTap: () => _incrementPortion(friend.id),
-                          borderRadius: BorderRadius.circular(999),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                        ),
+
+                        // Stepper or Tap button
+                        if (isAssigned)
+                          Container(
                             decoration: BoxDecoration(
-                              color: AppColors.neoDark,
+                              color: AppColors.neoBg,
                               borderRadius: BorderRadius.circular(999),
+                              border: Border.all(color: AppColors.neoDark.withValues(alpha: 0.15)),
                             ),
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                const Icon(Icons.add_rounded, size: 12, color: AppColors.neoLime),
-                                const SizedBox(width: 4),
-                                Text(
-                                  'Tambah',
-                                  style: GoogleFonts.plusJakartaSans(
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.w800,
-                                    color: AppColors.neoLime,
+                                GestureDetector(
+                                  behavior: HitTestBehavior.opaque,
+                                  onTap: () => _decrementPortion(friend.id),
+                                  child: Container(
+                                    width: 30,
+                                    height: 30,
+                                    alignment: Alignment.center,
+                                    child: Icon(
+                                      portion > 1 ? Icons.remove_rounded : Icons.delete_outline_rounded,
+                                      size: 15,
+                                      color: portion > 1 ? AppColors.neoDark : Colors.redAccent,
+                                    ),
+                                  ),
+                                ),
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 6),
+                                  child: Text(
+                                    '$portion',
+                                    style: GoogleFonts.jetBrainsMono(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w900,
+                                      color: AppColors.neoDark,
+                                    ),
+                                  ),
+                                ),
+                                GestureDetector(
+                                  behavior: HitTestBehavior.opaque,
+                                  onTap: () => _incrementPortion(friend.id),
+                                  child: Container(
+                                    width: 30,
+                                    height: 30,
+                                    alignment: Alignment.center,
+                                    child: const Icon(
+                                      Icons.add_rounded,
+                                      size: 15,
+                                      color: AppColors.neoDark,
+                                    ),
                                   ),
                                 ),
                               ],
                             ),
+                          )
+                        else
+                          InkWell(
+                            onTap: () => _incrementPortion(friend.id),
+                            borderRadius: BorderRadius.circular(999),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: AppColors.neoDark,
+                                borderRadius: BorderRadius.circular(999),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(Icons.add_rounded, size: 12, color: AppColors.neoLime),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    'Ikut',
+                                    style: GoogleFonts.plusJakartaSans(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w800,
+                                      color: AppColors.neoLime,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
                           ),
-                        ),
-                    ],
+                      ],
+                    ),
                   ),
                 );
               },
             ),
           ),
 
-          const SizedBox(height: 18),
+          const SizedBox(height: 16),
 
           // Save Button
           NeoPillButton(

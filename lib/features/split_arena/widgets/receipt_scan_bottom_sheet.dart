@@ -39,7 +39,6 @@ class _ReceiptScanBottomSheetState extends ConsumerState<ReceiptScanBottomSheet>
   int? _detectedTax;
   int? _detectedService;
 
-
   @override
   void dispose() {
     _pasteController.dispose();
@@ -58,7 +57,7 @@ class _ReceiptScanBottomSheetState extends ConsumerState<ReceiptScanBottomSheet>
 
       setState(() {
         _isLoading = true;
-        _loadingMessage = 'Sedang membaca & mengekstrak struk... 🔍';
+        _loadingMessage = 'Membaca struk dengan OCR Engine 2... 🔍';
       });
 
       final bytes = await file.readAsBytes();
@@ -68,7 +67,7 @@ class _ReceiptScanBottomSheetState extends ConsumerState<ReceiptScanBottomSheet>
         if (mounted) {
           NeoToast.show(
             context,
-            'Tidak menemukan daftar menu. Kamu bisa tempel teks struk manual di bawah.',
+            'Tidak menemukan daftar menu. Coba cek hasil foto atau tempel teks struk manual.',
             type: NeoToastType.warning,
           );
         }
@@ -78,7 +77,6 @@ class _ReceiptScanBottomSheetState extends ConsumerState<ReceiptScanBottomSheet>
         _parsedItems = result.items;
         _detectedTax = result.taxAmount;
         _detectedService = result.serviceAmount;
-
         _isLoading = false;
       });
     } catch (e) {
@@ -115,7 +113,6 @@ class _ReceiptScanBottomSheetState extends ConsumerState<ReceiptScanBottomSheet>
       _parsedItems = result.items;
       _detectedTax = result.taxAmount;
       _detectedService = result.serviceAmount;
-
       _isPasteMode = false;
     });
 
@@ -123,6 +120,236 @@ class _ReceiptScanBottomSheetState extends ConsumerState<ReceiptScanBottomSheet>
       context,
       'Berhasil mengekstrak ${_parsedItems.length} menu dari teks! ⚡',
       type: NeoToastType.success,
+    );
+  }
+
+  void _showEditItemDialog(int index) {
+    final item = _parsedItems[index];
+    final nameController = TextEditingController(text: item.name);
+    final priceController = TextEditingController(text: item.unitPrice.toString());
+
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
+          children: [
+            Text(item.emoji, style: const TextStyle(fontSize: 22)),
+            const SizedBox(width: 8),
+            Text('Edit Menu Struk', style: AppTypography.cardTitle),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Nama Menu', style: AppTypography.captionBold),
+            const SizedBox(height: 4),
+            TextField(
+              controller: nameController,
+              decoration: InputDecoration(
+                filled: true,
+                fillColor: AppColors.neoBg,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              ),
+              style: GoogleFonts.plusJakartaSans(fontSize: 13, fontWeight: FontWeight.w700),
+            ),
+            const SizedBox(height: 12),
+            Text('Harga Satuan (Rp)', style: AppTypography.captionBold),
+            const SizedBox(height: 4),
+            TextField(
+              controller: priceController,
+              keyboardType: TextInputType.number,
+              decoration: InputDecoration(
+                filled: true,
+                fillColor: AppColors.neoBg,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              ),
+              style: GoogleFonts.jetBrainsMono(fontSize: 13, fontWeight: FontWeight.w700),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: Text(
+              'Batal',
+              style: GoogleFonts.plusJakartaSans(
+                color: AppColors.neoMuted,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.neoDark,
+              foregroundColor: AppColors.neoLime,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            onPressed: () {
+              final newName = nameController.text.trim();
+              final newPrice = int.tryParse(priceController.text.replaceAll(RegExp(r'[^0-9]'), '')) ?? item.unitPrice;
+              if (newName.isNotEmpty && newPrice > 0) {
+                setState(() {
+                  _parsedItems[index] = item.copyWith(
+                    name: newName,
+                    unitPrice: newPrice,
+                    emoji: ReceiptOcrService.detectEmoji(newName),
+                  );
+                });
+              }
+              Navigator.of(ctx).pop();
+            },
+            child: const Text('Simpan', style: TextStyle(fontWeight: FontWeight.w800)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showAddItemDialog() {
+    final nameController = TextEditingController();
+    final priceController = TextEditingController();
+    final qtyController = TextEditingController(text: '1');
+
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
+          children: [
+            const Icon(Icons.add_circle_outline_rounded, color: AppColors.neoDark),
+            const SizedBox(width: 8),
+            Text('Tambah Menu Struk', style: AppTypography.cardTitle),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Nama Menu', style: AppTypography.captionBold),
+            const SizedBox(height: 4),
+            TextField(
+              controller: nameController,
+              decoration: InputDecoration(
+                hintText: 'Misal: Nasi Putih',
+                hintStyle: GoogleFonts.plusJakartaSans(color: AppColors.neoMuted, fontSize: 12),
+                filled: true,
+                fillColor: AppColors.neoBg,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              ),
+              style: GoogleFonts.plusJakartaSans(fontSize: 13, fontWeight: FontWeight.w700),
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  flex: 3,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Harga Satuan', style: AppTypography.captionBold),
+                      const SizedBox(height: 4),
+                      TextField(
+                        controller: priceController,
+                        keyboardType: TextInputType.number,
+                        decoration: InputDecoration(
+                          hintText: '8000',
+                          hintStyle: GoogleFonts.jetBrainsMono(color: AppColors.neoMuted, fontSize: 12),
+                          filled: true,
+                          fillColor: AppColors.neoBg,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide.none,
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                        ),
+                        style: GoogleFonts.jetBrainsMono(fontSize: 13, fontWeight: FontWeight.w700),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  flex: 2,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Qty', style: AppTypography.captionBold),
+                      const SizedBox(height: 4),
+                      TextField(
+                        controller: qtyController,
+                        keyboardType: TextInputType.number,
+                        decoration: InputDecoration(
+                          filled: true,
+                          fillColor: AppColors.neoBg,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide.none,
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                        ),
+                        style: GoogleFonts.jetBrainsMono(fontSize: 13, fontWeight: FontWeight.w700),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: Text(
+              'Batal',
+              style: GoogleFonts.plusJakartaSans(
+                color: AppColors.neoMuted,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.neoDark,
+              foregroundColor: AppColors.neoLime,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            onPressed: () {
+              final name = nameController.text.trim();
+              final price = int.tryParse(priceController.text.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0;
+              final qty = int.tryParse(qtyController.text.replaceAll(RegExp(r'[^0-9]'), '')) ?? 1;
+
+              if (name.isNotEmpty && price > 0) {
+                setState(() {
+                  _parsedItems.add(
+                    ExtractedReceiptItem(
+                      name: name,
+                      quantity: qty > 0 ? qty : 1,
+                      unitPrice: price,
+                      emoji: ReceiptOcrService.detectEmoji(name),
+                    ),
+                  );
+                });
+              }
+              Navigator.of(ctx).pop();
+            },
+            child: const Text('Tambah', style: TextStyle(fontWeight: FontWeight.w800)),
+          ),
+        ],
+      ),
     );
   }
 
@@ -144,6 +371,7 @@ class _ReceiptScanBottomSheetState extends ConsumerState<ReceiptScanBottomSheet>
         quantity: item.quantity,
         emoji: item.emoji,
         assignedTo: activeId.isNotEmpty ? [activeId] : [],
+        portions: activeId.isNotEmpty ? {activeId: item.quantity} : {},
       );
     }).toList();
 
@@ -314,9 +542,9 @@ class _ReceiptScanBottomSheetState extends ConsumerState<ReceiptScanBottomSheet>
             ),
           ],
 
-          // Parsed Items Section
+          // Parsed Items Section with Quick Edit & Add
           if (_parsedItems.isNotEmpty) ...[
-            const SizedBox(height: 12),
+            const SizedBox(height: 10),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -324,13 +552,73 @@ class _ReceiptScanBottomSheetState extends ConsumerState<ReceiptScanBottomSheet>
                   'Hasil Scan (${_parsedItems.length} Menu)',
                   style: AppTypography.cardTitle.copyWith(fontSize: 13),
                 ),
-                Text(
-                  'Bisa di-adjust porsi & harganya',
-                  style: AppTypography.bodyMuted.copyWith(fontSize: 10),
+                InkWell(
+                  onTap: _showAddItemDialog,
+                  borderRadius: BorderRadius.circular(999),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: AppColors.neoBg,
+                      borderRadius: BorderRadius.circular(999),
+                      border: Border.all(color: AppColors.neoDark.withValues(alpha: 0.15)),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.add_rounded, size: 12, color: AppColors.neoDark),
+                        const SizedBox(width: 4),
+                        Text(
+                          'Tambah Menu',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.neoDark,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
               ],
             ),
+
+            // Detected Tax & Service Badge
+            if ((_detectedTax != null && _detectedTax! > 0) || (_detectedService != null && _detectedService! > 0)) ...[
+              const SizedBox(height: 6),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: AppColors.neoLime.withValues(alpha: 0.3),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: AppColors.neoDark.withValues(alpha: 0.2)),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.receipt_long_rounded, size: 13, color: AppColors.neoDark),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        '${[
+                          if (_detectedTax != null && _detectedTax! > 0)
+                            'Pajak: ${CurrencyFormatter.formatRp(_detectedTax!)}',
+                          if (_detectedService != null && _detectedService! > 0)
+                            'Service: ${CurrencyFormatter.formatRp(_detectedService!)}',
+                        ].join(' • ')} (otomatis diaktifkan)',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.neoDark,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+
             const SizedBox(height: 8),
+
+            // Parsed Items List
             Flexible(
               child: ListView.separated(
                 shrinkWrap: true,
@@ -339,7 +627,7 @@ class _ReceiptScanBottomSheetState extends ConsumerState<ReceiptScanBottomSheet>
                 itemBuilder: (context, index) {
                   final item = _parsedItems[index];
                   return Container(
-                    padding: const EdgeInsets.all(10),
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                     decoration: BoxDecoration(
                       color: AppColors.neoBg,
                       borderRadius: BorderRadius.circular(16),
@@ -348,38 +636,63 @@ class _ReceiptScanBottomSheetState extends ConsumerState<ReceiptScanBottomSheet>
                       children: [
                         Text(item.emoji, style: const TextStyle(fontSize: 18)),
                         const SizedBox(width: 8),
+
+                        // Item name & price (tappable to edit)
                         Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                item.name,
-                                style: GoogleFonts.plusJakartaSans(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w700,
-                                  color: AppColors.neoDark,
+                          child: InkWell(
+                            onTap: () => _showEditItemDialog(index),
+                            borderRadius: BorderRadius.circular(8),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        children: [
+                                          Flexible(
+                                            child: Text(
+                                              item.name,
+                                              style: GoogleFonts.plusJakartaSans(
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.w700,
+                                                color: AppColors.neoDark,
+                                              ),
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          ),
+                                          const SizedBox(width: 4),
+                                          const Icon(Icons.edit_rounded, size: 11, color: AppColors.neoMuted),
+                                        ],
+                                      ),
+                                      Text(
+                                        '${CurrencyFormatter.formatRp(item.totalPrice)} (${CurrencyFormatter.formatShortRp(item.unitPrice)}/porsi)',
+                                        style: GoogleFonts.jetBrainsMono(
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.w700,
+                                          color: AppColors.neoMuted,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              Text(
-                                '${CurrencyFormatter.formatRp(item.totalPrice)} (${CurrencyFormatter.formatShortRp(item.unitPrice)}/porsi)',
-                                style: GoogleFonts.jetBrainsMono(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppColors.neoMuted,
-                                ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                         ),
+
+                        const SizedBox(width: 8),
+
                         // Stepper for Quantity
                         Container(
                           decoration: BoxDecoration(
                             color: Colors.white,
                             borderRadius: BorderRadius.circular(999),
+                            border: Border.all(color: AppColors.neoDark.withValues(alpha: 0.12)),
                           ),
                           child: Row(
+                            mainAxisSize: MainAxisSize.min,
                             children: [
                               InkWell(
                                 onTap: () {
@@ -404,7 +717,7 @@ class _ReceiptScanBottomSheetState extends ConsumerState<ReceiptScanBottomSheet>
                                 ),
                               ),
                               Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 4),
+                                padding: const EdgeInsets.symmetric(horizontal: 5),
                                 child: Text(
                                   '${item.quantity}',
                                   style: GoogleFonts.jetBrainsMono(

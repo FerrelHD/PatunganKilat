@@ -49,9 +49,9 @@ void main() {
       await tester.tap(find.text('Open Sheet'));
       await tester.pumpAndSettle();
 
-      // Verify item name & status
+      // Verify item name
       expect(find.text('Dimsum Porsi'), findsOneWidget);
-      expect(find.text('Total 3 porsi terbagi (Pas dengan pesanan)'), findsOneWidget);
+      expect(find.text('Pas Qty'), findsOneWidget);
 
       // Verify friend names
       expect(find.text('Raka'), findsOneWidget);
@@ -108,13 +108,63 @@ void main() {
       await tester.tap(find.text('Open Sheet'));
       await tester.pumpAndSettle();
 
-      // Add Nadia (friend 2) who is currently unassigned
-      final tambahButtons = find.text('Tambah');
-      expect(tambahButtons, findsWidgets);
-      await tester.tap(tambahButtons.first);
+      // Add Nadia (friend 2) who is currently unassigned via "Ikut" button
+      final ikutButtons = find.text('Ikut');
+      expect(ikutButtons, findsWidgets);
+      await tester.tap(ikutButtons.first);
       await tester.pumpAndSettle();
 
       // Now both f1 and f2 are assigned
+      // Tap Simpan
+      await tester.tap(find.text('Simpan Pembagian Porsi ⚡'));
+      await tester.pumpAndSettle();
+
+      expect(savedPortions, isNotNull);
+      expect(savedPortions!['f1'], 1);
+      expect(savedPortions!['f2'], 1);
+    });
+
+    testWidgets('Bagi Rata (1:1) resets all unequal portions to 1', (tester) async {
+      const item = MenuItem(
+        id: '1',
+        name: 'Pizza Pepperoni',
+        price: 90000,
+        quantity: 1,
+        assignedTo: ['f1', 'f2'],
+        portions: {'f1': 3, 'f2': 1},
+      );
+
+      Map<String, int>? savedPortions;
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: Builder(
+              builder: (context) => ElevatedButton(
+                onPressed: () {
+                  ItemPortionSplitBottomSheet.show(
+                    context,
+                    item: item,
+                    allFriends: testFriends,
+                    onSave: (portions) {
+                      savedPortions = portions;
+                    },
+                  );
+                },
+                child: const Text('Open Sheet'),
+              ),
+            ),
+          ),
+        ),
+      );
+
+      await tester.tap(find.text('Open Sheet'));
+      await tester.pumpAndSettle();
+
+      // Tap Bagi Rata (1:1)
+      await tester.tap(find.text('Bagi Rata (1:1)'));
+      await tester.pumpAndSettle();
+
       // Tap Simpan
       await tester.tap(find.text('Simpan Pembagian Porsi ⚡'));
       await tester.pumpAndSettle();
