@@ -52,7 +52,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     if (name.isEmpty) {
       NeoToast.show(
         context,
-        'Silakan masukkan nama panggilanmu',
+        'Nama panggilan wajib diisi',
         type: NeoToastType.warning,
       );
       return;

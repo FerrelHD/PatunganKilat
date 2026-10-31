@@ -207,7 +207,7 @@ class SplitArenaScreen extends ConsumerWidget {
                               notifier.addNewMenuItem(name, price, emoji, quantity: quantity);
                               NeoToast.show(
                                 context,
-                                '"$name" ($quantity porsi) ditambahkan! ⚡',
+                                '"$name" ditambahkan',
                                 type: NeoToastType.success,
                               );
                             },
@@ -327,7 +327,7 @@ class SplitArenaScreen extends ConsumerWidget {
                             notifier.splitAllEqually();
                             NeoToast.show(
                               context,
-                              'Semua menu dibagi rata ke seluruh teman! ⚡',
+                              'Tagihan dibagi rata ke semua teman',
                               type: NeoToastType.info,
                             );
                           },
@@ -419,7 +419,7 @@ class SplitArenaScreen extends ConsumerWidget {
                                           notifier.addNewMenuItem(name, price, emoji, quantity: quantity);
                                           NeoToast.show(
                                             context,
-                                            '"$name" ($quantity porsi) ditambahkan! ⚡',
+                                            '"$name" ditambahkan',
                                             type: NeoToastType.success,
                                           );
                                         },
@@ -478,7 +478,7 @@ class SplitArenaScreen extends ConsumerWidget {
                                   notifier.setItemPortions(item.id, updatedPortions);
                                   NeoToast.show(
                                     context,
-                                    'Porsi "${item.name}" berhasil diatur! ⚡',
+                                    'Porsi "${item.name}" diperbarui',
                                     type: NeoToastType.success,
                                   );
                                 },
@@ -537,7 +537,8 @@ class SplitArenaScreen extends ConsumerWidget {
                   if (session.items.isEmpty) {
                     NeoToast.show(
                       context,
-                      'Tambahkan minimal 1 menu makanan terlebih dahulu untuk melihat struk',
+                      'Tambahkan minimal 1 menu makanan terlebih dahulu untuk melihat struk.',
+                      title: 'Belum Ada Menu',
                       type: NeoToastType.warning,
                     );
                     return;

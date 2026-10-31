@@ -72,7 +72,7 @@ class _EditAccountBottomSheetState extends ConsumerState<EditAccountBottomSheet>
     if (name.isEmpty) {
       NeoToast.show(
         context,
-        'Nama panggilan tidak boleh kosong',
+        'Nama panggilan wajib diisi',
         type: NeoToastType.warning,
       );
       return;

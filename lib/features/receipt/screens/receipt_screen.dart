@@ -74,7 +74,7 @@ class _ReceiptScreenState extends ConsumerState<ReceiptScreen> {
           context,
           success
               ? 'Struk siap dibagikan / tersimpan! 🧾⚡'
-              : 'Gagal memproses gambar struk. Coba lagi.',
+              : 'Gagal memproses gambar struk',
           type: success ? NeoToastType.success : NeoToastType.error,
         );
       }

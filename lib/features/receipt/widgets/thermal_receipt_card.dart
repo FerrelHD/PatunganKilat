@@ -271,7 +271,7 @@ class ThermalReceiptCard extends ConsumerWidget {
                           Clipboard.setData(ClipboardData(text: accountNumber));
                           NeoToast.show(
                             context,
-                            'Nomor rekening $bankName ($accountNumber) disalin! ⚡',
+                            'No. Rekening $bankName disalin',
                             type: NeoToastType.success,
                           );
                         },
@@ -350,7 +350,7 @@ class ThermalReceiptCard extends ConsumerWidget {
                             Clipboard.setData(ClipboardData(text: userProfile.walletNumber));
                             NeoToast.show(
                               context,
-                              'Nomor ${userProfile.walletName} (${userProfile.walletNumber}) disalin! ⚡',
+                              'No. E-Wallet ${userProfile.walletName} disalin',
                               type: NeoToastType.success,
                             );
                           },

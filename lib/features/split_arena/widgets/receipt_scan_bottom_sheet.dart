@@ -67,7 +67,8 @@ class _ReceiptScanBottomSheetState extends ConsumerState<ReceiptScanBottomSheet>
         if (mounted) {
           NeoToast.show(
             context,
-            'Tidak menemukan daftar menu. Coba cek hasil foto atau tempel teks struk manual.',
+            'Pastikan foto fokus dan nominal terbaca, atau coba gunakan mode teks.',
+            title: 'Menu Tidak Terdeteksi',
             type: NeoToastType.warning,
           );
         }
@@ -84,7 +85,8 @@ class _ReceiptScanBottomSheetState extends ConsumerState<ReceiptScanBottomSheet>
         setState(() => _isLoading = false);
         NeoToast.show(
           context,
-          'Gagal membaca foto struk: ${e.toString().replaceAll("Exception:", "").trim()}. Coba tempel teks struk yaa.',
+          'Foto buram atau koneksi terganggu. Kamu bisa gunakan mode tempel teks.',
+          title: 'Gagal Scan Struk',
           type: NeoToastType.error,
         );
         setState(() => _isPasteMode = true);
@@ -103,7 +105,8 @@ class _ReceiptScanBottomSheetState extends ConsumerState<ReceiptScanBottomSheet>
     if (result.items.isEmpty) {
       NeoToast.show(
         context,
-        'Format teks tidak dikenali. Pastikan ada nama menu & harga (misal: 2x Nasi Goreng 50.000)',
+        'Gunakan format seperti: 2x Nasi Goreng 50.000',
+        title: 'Format Teks Kurang Pas',
         type: NeoToastType.warning,
       );
       return;

@@ -51,7 +51,7 @@ class _AddMenuBottomSheetState extends State<AddMenuBottomSheet> {
     if (name.isEmpty || price <= 0) {
       NeoToast.show(
         context,
-        'Silakan masukkan nama menu dan nominal harga yang valid',
+        'Nama menu dan harga yang valid wajib diisi',
         type: NeoToastType.warning,
       );
       return;

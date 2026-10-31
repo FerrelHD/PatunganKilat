@@ -130,7 +130,7 @@ class NeoLimeCard extends StatelessWidget {
                             Clipboard.setData(ClipboardData(text: rawAccountNumber));
                             NeoToast.show(
                               context,
-                              'Nomor rekening $bankName ($rawAccountNumber) disalin! ⚡',
+                              'No. Rekening $bankName disalin',
                               type: NeoToastType.success,
                             );
                           },

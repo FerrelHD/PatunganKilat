@@ -171,7 +171,7 @@ class NeoDarkCard extends StatelessWidget {
                     Clipboard.setData(ClipboardData(text: textToCopy));
                     NeoToast.show(
                       context,
-                      'Nomor $walletName ($textToCopy) disalin! ⚡',
+                      'No. E-Wallet $walletName disalin',
                       type: NeoToastType.success,
                     );
                   },

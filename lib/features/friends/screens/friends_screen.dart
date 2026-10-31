@@ -122,7 +122,7 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
                         Navigator.pop(ctx);
                         NeoToast.show(
                           context,
-                          '$name berhasil ditambahkan ke $chosenGroup! 🎉',
+                          '$name ditambahkan ke $chosenGroup',
                           type: NeoToastType.success,
                         );
                       }

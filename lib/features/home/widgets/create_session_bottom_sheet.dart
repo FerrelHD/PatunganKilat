@@ -66,7 +66,7 @@ class _CreateSessionBottomSheetState extends ConsumerState<CreateSessionBottomSh
     if (title.isEmpty) {
       NeoToast.show(
         context,
-        'Silakan masukkan nama tempat atau acara nongkrong',
+        'Nama tempat atau acara wajib diisi',
         type: NeoToastType.warning,
       );
       return;

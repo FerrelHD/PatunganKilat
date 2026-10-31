@@ -73,7 +73,7 @@ class HomeScreen extends ConsumerWidget {
                     onTap: () {
                       NeoToast.show(
                         context,
-                        'Aplikasi siap digunakan untuk bagi tagihan! ⚡',
+                        'PatunganKilat siap digunakan',
                         type: NeoToastType.info,
                       );
                     },
