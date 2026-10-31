@@ -5,7 +5,7 @@ import 'package:patungankilat/core/widgets/neo_toast.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  testWidgets('NeoToast displays success message in overlay at top of screen', (tester) async {
+  testWidgets('NeoToast renders compact pill with semantic checkmark for brief messages', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
@@ -13,9 +13,9 @@ void main() {
             builder: (context) => Center(
               child: ElevatedButton(
                 onPressed: () {
-                  NeoToast.show(context, 'Rekening berhasil disalin! ⚡', type: NeoToastType.success);
+                  NeoToast.show(context, 'No. Rekening BCA disalin', type: NeoToastType.success);
                 },
-                child: const Text('Show Toast'),
+                child: const Text('Show Compact'),
               ),
             ),
           ),
@@ -23,42 +23,38 @@ void main() {
       ),
     );
 
-    expect(find.text('Rekening berhasil disalin! ⚡'), findsNothing);
+    expect(find.text('No. Rekening BCA disalin'), findsNothing);
 
-    await tester.tap(find.text('Show Toast'));
+    await tester.tap(find.text('Show Compact'));
     await tester.pump(); // Start animation
     await tester.pump(const Duration(milliseconds: 300)); // Finish slide-in
 
-    expect(find.text('Rekening berhasil disalin! ⚡'), findsOneWidget);
-    expect(find.byIcon(Icons.bolt_rounded), findsOneWidget);
+    expect(find.text('No. Rekening BCA disalin'), findsOneWidget);
+    // Uses clean semantic checkmark, not generic lightning slop
+    expect(find.byIcon(Icons.check_rounded), findsOneWidget);
 
     // After duration, it disappears
-    await tester.pump(const Duration(milliseconds: 2300));
+    await tester.pump(const Duration(milliseconds: 2100));
     await tester.pump(const Duration(milliseconds: 300));
-    expect(find.text('Rekening berhasil disalin! ⚡'), findsNothing);
+    expect(find.text('No. Rekening BCA disalin'), findsNothing);
   });
 
-  testWidgets('NeoToast renders warning and error variants with appropriate icons', (tester) async {
+  testWidgets('NeoToast renders expanded card with title and instruction when title is provided', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
           body: Builder(
             builder: (context) => Center(
-              child: Column(
-                children: [
-                  ElevatedButton(
-                    onPressed: () {
-                      NeoToast.show(context, 'Nama tidak boleh kosong', type: NeoToastType.warning);
-                    },
-                    child: const Text('Show Warning'),
-                  ),
-                  ElevatedButton(
-                    onPressed: () {
-                      NeoToast.show(context, 'Gagal memproses struk', type: NeoToastType.error);
-                    },
-                    child: const Text('Show Error'),
-                  ),
-                ],
+              child: ElevatedButton(
+                onPressed: () {
+                  NeoToast.show(
+                    context,
+                    'Foto buram atau kurang terang. Coba gunakan foto yang lebih jelas atau tempel teks.',
+                    title: 'Struk Tidak Terbaca',
+                    type: NeoToastType.warning,
+                  );
+                },
+                child: const Text('Show Expanded'),
               ),
             ),
           ),
@@ -66,20 +62,47 @@ void main() {
       ),
     );
 
-    // Test warning
-    await tester.tap(find.text('Show Warning'));
+    await tester.tap(find.text('Show Expanded'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
 
-    expect(find.text('Nama tidak boleh kosong'), findsOneWidget);
+    expect(find.text('Struk Tidak Terbaca'), findsOneWidget);
+    expect(
+      find.text('Foto buram atau kurang terang. Coba gunakan foto yang lebih jelas atau tempel teks.'),
+      findsOneWidget,
+    );
     expect(find.byIcon(Icons.warning_amber_rounded), findsOneWidget);
+  });
 
-    // Test error (showing another toast replaces previous)
+  testWidgets('NeoToast renders error variant with appropriate error icon', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: Builder(
+            builder: (context) => Center(
+              child: ElevatedButton(
+                onPressed: () {
+                  NeoToast.show(
+                    context,
+                    'Format teks tidak dikenali',
+                    title: 'Gagal Ekstrak',
+                    type: NeoToastType.error,
+                  );
+                },
+                child: const Text('Show Error'),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
     await tester.tap(find.text('Show Error'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
 
-    expect(find.text('Gagal memproses struk'), findsOneWidget);
+    expect(find.text('Gagal Ekstrak'), findsOneWidget);
+    expect(find.text('Format teks tidak dikenali'), findsOneWidget);
     expect(find.byIcon(Icons.error_outline_rounded), findsOneWidget);
   });
 
@@ -115,4 +138,3 @@ void main() {
     expect(find.text('Tap to dismiss me'), findsNothing);
   });
 }
-

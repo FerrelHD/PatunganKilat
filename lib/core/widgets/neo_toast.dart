@@ -15,12 +15,19 @@ class NeoToast {
 
   static OverlayEntry? _activeEntry;
 
-  /// Shows a clean Apple Dynamic Island style top-floating toast notification
+  /// Shows an adaptive Apple Dynamic Island style notification.
+  ///
+  /// - **Compact Mode** (brief 1-line messages without title):
+  ///   Renders as a sleek, ultra-clean pill for micro-feedback (e.g. copied to clipboard).
+  /// - **Expanded Mode** (when [title] is supplied or message is lengthy):
+  ///   Renders as a structured squircle card with title and helpful remedy instruction.
   static void show(
     BuildContext context,
     String message, {
+    String? title,
     NeoToastType type = NeoToastType.success,
-    Duration duration = const Duration(milliseconds: 2200),
+    Duration? duration,
+    IconData? customIcon,
   }) {
     // Dismiss any currently visible toast
     _dismissActive();
@@ -28,12 +35,19 @@ class NeoToast {
     final overlay = Overlay.maybeOf(context, rootOverlay: true);
     if (overlay == null) return;
 
+    final isExpanded = title != null || message.length > 55;
+    final defaultDuration = isExpanded
+        ? const Duration(milliseconds: 3200)
+        : const Duration(milliseconds: 2000);
+
     late final OverlayEntry entry;
     entry = OverlayEntry(
       builder: (context) => _NeoToastWidget(
+        title: title,
         message: message,
         type: type,
-        duration: duration,
+        customIcon: customIcon,
+        duration: duration ?? defaultDuration,
         onDismiss: () {
           if (_activeEntry == entry) {
             _activeEntry?.remove();
@@ -54,14 +68,18 @@ class NeoToast {
 }
 
 class _NeoToastWidget extends StatefulWidget {
+  final String? title;
   final String message;
   final NeoToastType type;
+  final IconData? customIcon;
   final Duration duration;
   final VoidCallback onDismiss;
 
   const _NeoToastWidget({
+    this.title,
     required this.message,
     required this.type,
+    this.customIcon,
     required this.duration,
     required this.onDismiss,
   });
@@ -86,8 +104,8 @@ class _NeoToastWidgetState extends State<_NeoToastWidget> with SingleTickerProvi
       duration: const Duration(milliseconds: 260),
     );
 
-    // Dynamic Island spring-out physics
-    _scaleAnimation = Tween<double>(begin: 0.72, end: 1.0).animate(
+    // Spring-out dynamic island physics
+    _scaleAnimation = Tween<double>(begin: 0.78, end: 1.0).animate(
       CurvedAnimation(
         parent: _controller,
         curve: Curves.easeOutBack,
@@ -154,9 +172,10 @@ class _NeoToastWidgetState extends State<_NeoToastWidget> with SingleTickerProvi
   }
 
   IconData get _iconData {
+    if (widget.customIcon != null) return widget.customIcon!;
     switch (widget.type) {
       case NeoToastType.success:
-        return Icons.bolt_rounded;
+        return Icons.check_rounded; // Semantic checkmark (no generic AI lightning slop)
       case NeoToastType.warning:
         return Icons.warning_amber_rounded;
       case NeoToastType.error:
@@ -169,6 +188,7 @@ class _NeoToastWidgetState extends State<_NeoToastWidget> with SingleTickerProvi
   @override
   Widget build(BuildContext context) {
     final topPadding = MediaQuery.of(context).padding.top;
+    final isExpanded = widget.title != null || widget.message.length > 55;
 
     return Positioned(
       top: topPadding + 10,
@@ -192,18 +212,25 @@ class _NeoToastWidgetState extends State<_NeoToastWidget> with SingleTickerProvi
                     }
                   },
                   child: Container(
-                    constraints: const BoxConstraints(maxWidth: 420),
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                    constraints: BoxConstraints(
+                      maxWidth: isExpanded ? 400 : 360,
+                    ),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: isExpanded ? 14 : 14,
+                      vertical: isExpanded ? 12 : 9,
+                    ),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF000000), // Pure Dynamic Island pitch black
-                      borderRadius: BorderRadius.circular(999),
+                      color: const Color(0xFF0D0E11), // Neobank Pitch Black
+                      borderRadius: BorderRadius.circular(isExpanded ? 18 : 999),
                       border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.12),
+                        color: isExpanded
+                            ? _accentColor.withValues(alpha: 0.28)
+                            : Colors.white.withValues(alpha: 0.12),
                         width: 0.8,
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.40),
+                          color: Colors.black.withValues(alpha: 0.42),
                           blurRadius: 22,
                           spreadRadius: 1,
                           offset: const Offset(0, 8),
@@ -215,40 +242,7 @@ class _NeoToastWidgetState extends State<_NeoToastWidget> with SingleTickerProvi
                         ),
                       ],
                     ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Container(
-                          width: 24,
-                          height: 24,
-                          decoration: BoxDecoration(
-                            color: _accentColor.withValues(alpha: 0.18),
-                            shape: BoxShape.circle,
-                          ),
-                          child: Center(
-                            child: Icon(
-                              _iconData,
-                              size: 14,
-                              color: _accentColor,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        Flexible(
-                          child: Text(
-                            widget.message,
-                            style: GoogleFonts.plusJakartaSans(
-                              color: Colors.white,
-                              fontSize: 12.5,
-                              fontWeight: FontWeight.w600,
-                              letterSpacing: -0.2,
-                            ),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
-                    ),
+                    child: isExpanded ? _buildExpandedLayout() : _buildCompactLayout(),
                   ),
                 ),
               ),
@@ -256,6 +250,100 @@ class _NeoToastWidgetState extends State<_NeoToastWidget> with SingleTickerProvi
           ),
         ),
       ),
+    );
+  }
+
+  /// Single-line compact pill for quick confirmations
+  Widget _buildCompactLayout() {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 22,
+          height: 22,
+          decoration: BoxDecoration(
+            color: _accentColor.withValues(alpha: 0.16),
+            shape: BoxShape.circle,
+          ),
+          child: Center(
+            child: Icon(
+              _iconData,
+              size: 13,
+              color: _accentColor,
+            ),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Flexible(
+          child: Text(
+            widget.message,
+            style: GoogleFonts.plusJakartaSans(
+              color: Colors.white,
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              letterSpacing: -0.2,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// Multi-line card with bold title and subtle descriptive instructions
+  Widget _buildExpandedLayout() {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          width: 30,
+          height: 30,
+          margin: const EdgeInsets.only(top: 1),
+          decoration: BoxDecoration(
+            color: _accentColor.withValues(alpha: 0.16),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Center(
+            child: Icon(
+              _iconData,
+              size: 16,
+              color: _accentColor,
+            ),
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (widget.title != null) ...[
+                Text(
+                  widget.title!,
+                  style: GoogleFonts.plusJakartaSans(
+                    color: Colors.white,
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: -0.2,
+                  ),
+                ),
+                const SizedBox(height: 2),
+              ],
+              Text(
+                widget.message,
+                style: GoogleFonts.plusJakartaSans(
+                  color: Colors.white.withValues(alpha: 0.78),
+                  fontSize: 11,
+                  fontWeight: FontWeight.w500,
+                  height: 1.35,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }
