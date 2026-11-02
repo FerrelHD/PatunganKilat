@@ -15,12 +15,12 @@ class NeoToast {
 
   static OverlayEntry? _activeEntry;
 
-  /// Shows an adaptive Apple Dynamic Island style notification.
+  /// Shows a clean, modern minimalist card notification (Linear / Vercel style).
   ///
-  /// - **Compact Mode** (brief 1-line messages without title):
-  ///   Renders as a sleek, ultra-clean pill for micro-feedback (e.g. copied to clipboard).
-  /// - **Expanded Mode** (when [title] is supplied or message is lengthy):
-  ///   Renders as a structured squircle card with title and helpful remedy instruction.
+  /// - Crisp white card with subtle grey border and dual-layer soft elevation.
+  /// - High-contrast semantic indicator on the left.
+  /// - Structured hierarchy: bold headline (if [title] is provided) + concise body.
+  /// - Snappy, non-distracting slide-down animation with dismiss button.
   static void show(
     BuildContext context,
     String message, {
@@ -38,7 +38,7 @@ class NeoToast {
     final isExpanded = title != null || message.length > 55;
     final defaultDuration = isExpanded
         ? const Duration(milliseconds: 3200)
-        : const Duration(milliseconds: 2000);
+        : const Duration(milliseconds: 2200);
 
     late final OverlayEntry entry;
     entry = OverlayEntry(
@@ -90,7 +90,6 @@ class _NeoToastWidget extends StatefulWidget {
 
 class _NeoToastWidgetState extends State<_NeoToastWidget> with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
-  late final Animation<double> _scaleAnimation;
   late final Animation<Offset> _slideAnimation;
   late final Animation<double> _fadeAnimation;
   Timer? _timer;
@@ -99,22 +98,14 @@ class _NeoToastWidgetState extends State<_NeoToastWidget> with SingleTickerProvi
   @override
   void initState() {
     super.initState();
+    // Snappy 200ms motion like Linear/Vercel
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 260),
-    );
-
-    // Spring-out dynamic island physics
-    _scaleAnimation = Tween<double>(begin: 0.78, end: 1.0).animate(
-      CurvedAnimation(
-        parent: _controller,
-        curve: Curves.easeOutBack,
-        reverseCurve: Curves.easeInCubic,
-      ),
+      duration: const Duration(milliseconds: 200),
     );
 
     _slideAnimation = Tween<Offset>(
-      begin: const Offset(0, -0.65),
+      begin: const Offset(0, -0.40),
       end: Offset.zero,
     ).animate(
       CurvedAnimation(
@@ -158,16 +149,17 @@ class _NeoToastWidgetState extends State<_NeoToastWidget> with SingleTickerProvi
     super.dispose();
   }
 
+  /// High-contrast, accessible semantic colors on white background
   Color get _accentColor {
     switch (widget.type) {
       case NeoToastType.success:
-        return AppColors.neoLime;
+        return const Color(0xFF16A34A); // Emerald Green
       case NeoToastType.warning:
-        return const Color(0xFFFF9F0A); // Apple Amber
+        return const Color(0xFFD97706); // Warm Amber
       case NeoToastType.error:
-        return const Color(0xFFFF453A); // Apple Red
+        return const Color(0xFFDC2626); // Clean Red
       case NeoToastType.info:
-        return const Color(0xFF0A84FF); // Apple Blue
+        return const Color(0xFF2563EB); // Royal Blue
     }
   }
 
@@ -175,7 +167,7 @@ class _NeoToastWidgetState extends State<_NeoToastWidget> with SingleTickerProvi
     if (widget.customIcon != null) return widget.customIcon!;
     switch (widget.type) {
       case NeoToastType.success:
-        return Icons.check_rounded; // Semantic checkmark (no generic AI lightning slop)
+        return Icons.check_rounded;
       case NeoToastType.warning:
         return Icons.warning_amber_rounded;
       case NeoToastType.error:
@@ -191,7 +183,7 @@ class _NeoToastWidgetState extends State<_NeoToastWidget> with SingleTickerProvi
     final isExpanded = widget.title != null || widget.message.length > 55;
 
     return Positioned(
-      top: topPadding + 10,
+      top: topPadding + 12,
       left: 16,
       right: 16,
       child: Center(
@@ -199,50 +191,117 @@ class _NeoToastWidgetState extends State<_NeoToastWidget> with SingleTickerProvi
           color: Colors.transparent,
           child: SlideTransition(
             position: _slideAnimation,
-            child: ScaleTransition(
-              scale: _scaleAnimation,
-              alignment: Alignment.topCenter,
-              child: FadeTransition(
-                opacity: _fadeAnimation,
-                child: GestureDetector(
-                  onTap: _dismiss,
-                  onVerticalDragUpdate: (details) {
-                    if (details.primaryDelta != null && details.primaryDelta! < -3) {
-                      _dismiss();
-                    }
-                  },
-                  child: Container(
-                    constraints: BoxConstraints(
-                      maxWidth: isExpanded ? 400 : 360,
+            child: FadeTransition(
+              opacity: _fadeAnimation,
+              child: GestureDetector(
+                onTap: _dismiss,
+                onVerticalDragUpdate: (details) {
+                  if (details.primaryDelta != null && details.primaryDelta! < -3) {
+                    _dismiss();
+                  }
+                },
+                child: Container(
+                  constraints: BoxConstraints(
+                    maxWidth: isExpanded ? 400 : 360,
+                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: Colors.white, // Clean White Card (Option B2)
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: const Color(0xFFE4E7EC), // Refined neutral grey border
+                      width: 1.0,
                     ),
-                    padding: EdgeInsets.symmetric(
-                      horizontal: isExpanded ? 14 : 14,
-                      vertical: isExpanded ? 12 : 9,
-                    ),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF0D0E11), // Neobank Pitch Black
-                      borderRadius: BorderRadius.circular(isExpanded ? 18 : 999),
-                      border: Border.all(
-                        color: isExpanded
-                            ? _accentColor.withValues(alpha: 0.28)
-                            : Colors.white.withValues(alpha: 0.12),
-                        width: 0.8,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.08),
+                        blurRadius: 16,
+                        spreadRadius: 0,
+                        offset: const Offset(0, 6),
                       ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.42),
-                          blurRadius: 22,
-                          spreadRadius: 1,
-                          offset: const Offset(0, 8),
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.04),
+                        blurRadius: 3,
+                        spreadRadius: 0,
+                        offset: const Offset(0, 1),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: isExpanded ? CrossAxisAlignment.start : CrossAxisAlignment.center,
+                    children: [
+                      // Status Icon Badge
+                      Container(
+                        width: 22,
+                        height: 22,
+                        margin: EdgeInsets.only(top: isExpanded ? 1.5 : 0),
+                        decoration: BoxDecoration(
+                          color: _accentColor.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(6),
                         ),
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.18),
-                          blurRadius: 6,
-                          offset: const Offset(0, 2),
+                        child: Center(
+                          child: Icon(
+                            _iconData,
+                            size: 13.5,
+                            color: _accentColor,
+                          ),
                         ),
-                      ],
-                    ),
-                    child: isExpanded ? _buildExpandedLayout() : _buildCompactLayout(),
+                      ),
+                      const SizedBox(width: 10),
+
+                      // Text Content (Title & Message)
+                      Flexible(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            if (widget.title != null) ...[
+                              Text(
+                                widget.title!,
+                                style: GoogleFonts.plusJakartaSans(
+                                  color: AppColors.neoDark,
+                                  fontSize: 12.5,
+                                  fontWeight: FontWeight.w800,
+                                  letterSpacing: -0.2,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                            ],
+                            Text(
+                              widget.message,
+                              style: GoogleFonts.plusJakartaSans(
+                                color: widget.title != null
+                                    ? const Color(0xFF64748B) // Subtle slate for body
+                                    : AppColors.neoDark, // Crisp dark for single line
+                                fontSize: 12,
+                                fontWeight: widget.title != null ? FontWeight.w500 : FontWeight.w700,
+                                letterSpacing: -0.1,
+                                height: 1.3,
+                              ),
+                              maxLines: isExpanded ? 3 : 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      const SizedBox(width: 10),
+
+                      // Subtle Dismiss Button (✕)
+                      InkWell(
+                        onTap: _dismiss,
+                        borderRadius: BorderRadius.circular(4),
+                        child: const Padding(
+                          padding: EdgeInsets.all(2),
+                          child: Icon(
+                            Icons.close_rounded,
+                            size: 14,
+                            color: Color(0xFF94A3B8),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
@@ -250,100 +309,6 @@ class _NeoToastWidgetState extends State<_NeoToastWidget> with SingleTickerProvi
           ),
         ),
       ),
-    );
-  }
-
-  /// Single-line compact pill for quick confirmations
-  Widget _buildCompactLayout() {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          width: 22,
-          height: 22,
-          decoration: BoxDecoration(
-            color: _accentColor.withValues(alpha: 0.16),
-            shape: BoxShape.circle,
-          ),
-          child: Center(
-            child: Icon(
-              _iconData,
-              size: 13,
-              color: _accentColor,
-            ),
-          ),
-        ),
-        const SizedBox(width: 8),
-        Flexible(
-          child: Text(
-            widget.message,
-            style: GoogleFonts.plusJakartaSans(
-              color: Colors.white,
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
-              letterSpacing: -0.2,
-            ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ),
-      ],
-    );
-  }
-
-  /// Multi-line card with bold title and subtle descriptive instructions
-  Widget _buildExpandedLayout() {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          width: 30,
-          height: 30,
-          margin: const EdgeInsets.only(top: 1),
-          decoration: BoxDecoration(
-            color: _accentColor.withValues(alpha: 0.16),
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Center(
-            child: Icon(
-              _iconData,
-              size: 16,
-              color: _accentColor,
-            ),
-          ),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              if (widget.title != null) ...[
-                Text(
-                  widget.title!,
-                  style: GoogleFonts.plusJakartaSans(
-                    color: Colors.white,
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: -0.2,
-                  ),
-                ),
-                const SizedBox(height: 2),
-              ],
-              Text(
-                widget.message,
-                style: GoogleFonts.plusJakartaSans(
-                  color: Colors.white.withValues(alpha: 0.78),
-                  fontSize: 11,
-                  fontWeight: FontWeight.w500,
-                  height: 1.35,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
     );
   }
 }

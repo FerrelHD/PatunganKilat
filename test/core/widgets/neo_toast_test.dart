@@ -5,7 +5,7 @@ import 'package:patungankilat/core/widgets/neo_toast.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  testWidgets('NeoToast renders compact pill with semantic checkmark for brief messages', (tester) async {
+  testWidgets('NeoToast renders clean white card with semantic checkmark and dismiss icon', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
@@ -15,7 +15,7 @@ void main() {
                 onPressed: () {
                   NeoToast.show(context, 'No. Rekening BCA disalin', type: NeoToastType.success);
                 },
-                child: const Text('Show Compact'),
+                child: const Text('Show Toast'),
               ),
             ),
           ),
@@ -25,21 +25,23 @@ void main() {
 
     expect(find.text('No. Rekening BCA disalin'), findsNothing);
 
-    await tester.tap(find.text('Show Compact'));
+    await tester.tap(find.text('Show Toast'));
     await tester.pump(); // Start animation
-    await tester.pump(const Duration(milliseconds: 300)); // Finish slide-in
+    await tester.pump(const Duration(milliseconds: 250)); // Finish slide-in
 
     expect(find.text('No. Rekening BCA disalin'), findsOneWidget);
-    // Uses clean semantic checkmark, not generic lightning slop
+    // Semantic checkmark
     expect(find.byIcon(Icons.check_rounded), findsOneWidget);
+    // Linear style close icon
+    expect(find.byIcon(Icons.close_rounded), findsOneWidget);
 
     // After duration, it disappears
-    await tester.pump(const Duration(milliseconds: 2100));
-    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pump(const Duration(milliseconds: 2300));
+    await tester.pump(const Duration(milliseconds: 250));
     expect(find.text('No. Rekening BCA disalin'), findsNothing);
   });
 
-  testWidgets('NeoToast renders expanded card with title and instruction when title is provided', (tester) async {
+  testWidgets('NeoToast renders structured card with title and instruction when title is provided', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
@@ -64,7 +66,7 @@ void main() {
 
     await tester.tap(find.text('Show Expanded'));
     await tester.pump();
-    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pump(const Duration(milliseconds: 250));
 
     expect(find.text('Struk Tidak Terbaca'), findsOneWidget);
     expect(
@@ -99,14 +101,14 @@ void main() {
 
     await tester.tap(find.text('Show Error'));
     await tester.pump();
-    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pump(const Duration(milliseconds: 250));
 
     expect(find.text('Gagal Ekstrak'), findsOneWidget);
     expect(find.text('Format teks tidak dikenali'), findsOneWidget);
     expect(find.byIcon(Icons.error_outline_rounded), findsOneWidget);
   });
 
-  testWidgets('NeoToast can be dismissed immediately by tapping on it', (tester) async {
+  testWidgets('NeoToast can be dismissed immediately by tapping on close icon or toast', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
@@ -114,7 +116,7 @@ void main() {
             builder: (context) => Center(
               child: ElevatedButton(
                 onPressed: () {
-                  NeoToast.show(context, 'Tap to dismiss me', type: NeoToastType.info);
+                  NeoToast.show(context, 'Tap close to dismiss', type: NeoToastType.info);
                 },
                 child: const Text('Show Toast'),
               ),
@@ -126,15 +128,15 @@ void main() {
 
     await tester.tap(find.text('Show Toast'));
     await tester.pump();
-    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pump(const Duration(milliseconds: 250));
 
-    expect(find.text('Tap to dismiss me'), findsOneWidget);
+    expect(find.text('Tap close to dismiss'), findsOneWidget);
 
-    // Tap on the toast itself to dismiss
-    await tester.tap(find.text('Tap to dismiss me'));
+    // Tap on close button to dismiss
+    await tester.tap(find.byIcon(Icons.close_rounded));
     await tester.pump();
-    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pump(const Duration(milliseconds: 250));
 
-    expect(find.text('Tap to dismiss me'), findsNothing);
+    expect(find.text('Tap close to dismiss'), findsNothing);
   });
 }
